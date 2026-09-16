@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { width: 300px; padding: 15px; font-family: sans-serif; background-color: #f0f2f5; }
+        button { width: 100%; padding: 10px; margin-top: 10px; cursor: pointer; background: #0078D4; color: white; border: none; border-radius: 5px; }
+        .status { margin-top: 10px; font-size: 12px; text-align: center; color: gray; }
+    </style>
+</head>
+<body>
+    <h3>Binary Snap</h3>
+    <p>Создайте бинарный слепок текущей страницы.</p>
+
+    <!-- Кнопка генерации -->
+    <button id="snapBtn">Сгенерировать слепок (Free)</button>
+
+    <!-- Кнопка оплаты и отправки -->
+    <button id="payBtn" style="background: #28a745; display:none;">Оплатить Blik (5 PLN)</button>
+
+    <div class="status" id="status">Готов к действию...</div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

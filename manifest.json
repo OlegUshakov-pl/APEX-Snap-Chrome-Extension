@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Binary Snap - AI Indexer",
+  "version": "1.0",
+  "description": "Создает бинарные слепки страниц с AI и отправляет их на сервер за 5 PLN.",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  },
+  "icons": {
+    "128": "icon.png"
+  }
+}
