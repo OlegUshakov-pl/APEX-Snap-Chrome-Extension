@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" fill="#f0f4f8" rx="20"/>
+  
+  <!-- Scanner/Radar Icon - Light Blue Theme -->
+  <!-- Outer ring -->
+  <circle cx="256" cy="256" r="140" fill="none" stroke="#a0b8d0" stroke-width="8"/>
+  <!-- Middle ring -->
+  <circle cx="256" cy="256" r="95" fill="none" stroke="#c0d4e8" stroke-width="6"/>
+  <!-- Inner dot -->
+  <circle cx="256" cy="256" r="12" fill="#a0b8d0"/>
+  
+  <!-- Scanner beam line -->
+  <line x1="256" y1="256" x2="340" y2="170" stroke="#c0d4e8" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Text - ApexScan -->
+  <text x="256" y="200" font-family="Arial, sans-serif" font-size="56" font-weight="bold" fill="#a0b8d0" text-anchor="middle">Apex</text>
+  <text x="310" y="200" font-family="Arial, sans-serif" font-size="56" font-weight="lighter" fill="#c0d4e8" text-anchor="start">Scan</text>
+  
+  <!-- Scanner beam accent -->
+  <circle cx="370" cy="150" r="25" fill="none" stroke="#c0d4e8" stroke-width="6"/>
+</svg>
