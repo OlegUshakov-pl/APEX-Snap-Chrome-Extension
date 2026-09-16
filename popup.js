@@ -1,37 +1,62 @@
-// content.js - работает внутри веб-страницы
+// popup.js - Обновленная версия с отправкой данных
 
-async function capturePage() {
-    // 1. Получаем текст страницы
-    const textContent = document.body.innerText;
+const snapBtn = document.getElementById('snapBtn');
+const payBtn = document.getElementById('payBtn'); // Кнопка оплаты пока остается
+const statusDiv = document.getElementById('status');
 
-    // 2. Делаем скриншот (используем API браузера для захвата)
-    // В реальном приложении мы используем fetch к серверу для AI обработки
+let currentSnapData = null;
 
-    // Пример: собираем данные
-    const data = {
-        url: window.location.href,
-        title: document.title,
-        textSnippet: textContent.substring(0, 500), // Берем кусок текста для анализа
-        timestamp: Date.now()
+snapBtn.addEventListener('click', async () => {
+    statusDiv.textContent = "Генерация слепка...";
+
+    // 1. Получаем данные страницы (упрощенно для теста)
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+    // Симуляция данных от AI и скриншота
+    const thumbnailBase64 = "data:image/png;base64,iVBORw0KG5..."; // Здесь будет реальное фото
+    const binaryData = "010010110...";
+    const metadataAI = { tags: ["news", "politics"], sentiment: 0.8 };
+
+    currentSnapData = {
+        source_url: tab.url,
+        thumbnail_base64: thumbnailBase64,
+        binary_data: binaryData,
+        metadata_ai: metadataAI
     };
 
-    console.log("Данные страницы собраны:", data);
+    statusDiv.textContent = "Отправка на сервер...";
 
-    // Здесь мы передадим данные в popup или напрямую на сервер
-    return data;
-}
-
-// Слушаем команду от popup'а
-chrome.runtime.onMessage.addListener((message, sender, response) => {
-    if (message.type === "CAPTURE") {
-        capturePage().then(data => {
-            // Отправляем данные обратно в popup или на сервер
-            chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                // Для простоты в MVP мы просто вернем данные в popup через callback
-            });
-
-            // В реальном сценарии здесь будет fetch к твоему API
-            console.log("Слепок готов для отправки");
+    // 2. Отправляем данные на твой FastAPI сервер
+    try {
+        const response = await fetch('http://127.0.0.1:8000/api/add-snap', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(currentSnapData)
         });
+
+        const result = await response.json();
+
+        if (result.status === "success") {
+            statusDiv.innerHTML = `Слепок сохранен!<br>ID: ${result.snap_id}`;
+            // Теперь можно показать кнопку оплаты или сразу открыть окно Blik
+            payBtn.style.display = 'block';
+        } else {
+            statusDiv.textContent = "Ошибка при сохранении.";
+        }
+
+    } catch (error) {
+        console.error(error);
+        statusDiv.textContent = "Не удалось подключиться к серверу.";
     }
+});
+
+payBtn.addEventListener('click', () => {
+    if (!currentSnapData) return;
+
+    // Симуляция оплаты Blik
+    statusDiv.innerHTML = "Открывается окно Blik...";
+
+    setTimeout(() => {
+        statusDiv.innerHTML = "Оплата прошла успешно!<br>Слепок активирован.";
+    }, 2000);
 });
