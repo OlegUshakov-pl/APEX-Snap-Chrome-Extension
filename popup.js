@@ -108,7 +108,7 @@ snapBtn.addEventListener('click', async () => {
             
             if (result?.status === "success") {
                 statusDiv.innerHTML = `Слепок сохранен!<br>ID: ${result.snap_id}`;
-                payBtn.style.display = 'block';
+                // payBtn.style.display = 'block'; // Blik оплата отключена
             } else {
                 // Даже если сервер недоступен, показываем результат AI
                 statusDiv.textContent = "Слепок сгенерирован локально.";
@@ -134,16 +134,16 @@ snapBtn.addEventListener('click', async () => {
     }
 });
 
-// Обработчик кнопки оплаты
-payBtn.addEventListener('click', () => {
-    if (!currentSnapData) return;
-    
-    statusDiv.innerHTML = "Открывается окно Blik...";
-    
-    setTimeout(() => {
-        statusDiv.innerHTML = "Оплата прошла успешно!<br>Слепок активирован.";
-    }, 2000);
-});
+// Обработчик кнопки оплаты (отключено)
+// payBtn.addEventListener('click', () => {
+//     if (!currentSnapData) return;
+//     
+//     statusDiv.innerHTML = "Открывается окно Blik...";
+//     
+//     setTimeout(() => {
+//         statusDiv.innerHTML = "Оплата прошла успешно!<br>Слепок активирован.";
+//     }, 2000);
+// });
 
 // Отправляет сообщение content script'у и получает ответ
 function sendMessageToContent(type) {
