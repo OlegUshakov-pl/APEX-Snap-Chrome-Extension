@@ -2,23 +2,82 @@
 <html>
 <head>
     <style>
-        body { width: 300px; padding: 15px; font-family: sans-serif; background-color: #f0f2f5; }
-        button { width: 100%; padding: 10px; margin-top: 10px; cursor: pointer; background: #0078D4; color: white; border: none; border-radius: 5px; }
-        .status { margin-top: 10px; font-size: 12px; text-align: center; color: gray; }
+        body { width: 320px; padding: 15px; font-family: sans-serif; background-color: #f0f2f5; }
+        h3 { margin-top: 0; color: #333; }
+        
+        /* Кнопки */
+        button { 
+            width: 100%; padding: 10px; margin-top: 8px; cursor: pointer; 
+            background: #0078D4; color: white; border: none; border-radius: 5px;
+            font-size: 13px;
+        }
+        button:hover { opacity: 0.9; }
+        
+        /* Кнопка оплаты */
+        .pay-btn { background: #28a745; }
+        
+        /* Статус */
+        .status { margin-top: 10px; font-size: 12px; text-align: center; color: gray; min-height: 20px; }
+        
+        /* Сервер выбора */
+        .server-select {
+            display: flex; gap: 5px; margin-bottom: 10px;
+        }
+        .server-btn {
+            padding: 6px 12px; font-size: 11px; border-radius: 4px;
+            border: 1px solid #ccc; background: white; cursor: pointer;
+            color: #333; width: auto; margin: 0;
+        }
+        .server-btn.active {
+            background: #0078D4; color: white; border-color: #0078D4;
+        }
+        
+        /* Конфиг */
+        .config-section {
+            background: #e9f0f5; padding: 10px; border-radius: 5px; margin-top: 10px;
+        }
+        .config-section label { font-size: 11px; color: #666; display: block; margin-bottom: 4px; }
+        .config-section input {
+            width: calc(100% - 8px); padding: 5px; border: 1px solid #ccc;
+            border-radius: 3px; font-size: 12px; margin-bottom: 6px;
+        }
+        
+        /* Результат */
+        .result { font-size: 11px; background: white; padding: 8px; border-radius: 4px; margin-top: 8px; max-height: 150px; overflow-y: auto; }
     </style>
 </head>
 <body>
-    <h3>Binary Snap</h3>
-    <p>Создайте бинарный слепок текущей страницы.</p>
-
+    <h3>Binary Snap AI</h3>
+    
+    <!-- Выбор сервера -->
+    <div class="server-select">
+        <button id="ollamaBtn" class="server-btn active">Ollama</button>
+        <button id="lmstudioBtn" class="server-btn">LM Studio</button>
+    </div>
+    
     <!-- Кнопка генерации -->
     <button id="snapBtn">Сгенерировать слепок (Free)</button>
-
+    
     <!-- Кнопка оплаты и отправки -->
-    <button id="payBtn" style="background: #28a745; display:none;">Оплатить Blik (5 PLN)</button>
-
+    <button id="payBtn" class="pay-btn" style="display:none;">Оплатить Blik (5 PLN)</button>
+    
+    <!-- Статус -->
     <div class="status" id="status">Готов к действию...</div>
-
+    
+    <!-- Результат AI анализа -->
+    <div class="result" id="aiResult"></div>
+    
+    <!-- Конфигурация сервера -->
+    <div class="config-section">
+        <label>URL сервера:</label>
+        <input type="text" id="serverUrl" placeholder="localhost:11161 или localhost:8080"/>
+        
+        <label>Модель (для Ollama):</label>
+        <input type="text" id="modelName" placeholder="llama3"/>
+    </div>
+    
+    <!-- Скрипты -->
+    <script src="ai-service.js"></script>
     <script src="popup.js"></script>
 </body>
 </html>
