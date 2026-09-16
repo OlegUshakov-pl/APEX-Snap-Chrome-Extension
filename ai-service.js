@@ -51,8 +51,8 @@ function saveAIConfig(config) {
     });
 }
 
-// Анализирует текст страницы через выбранный AI сервис
-async function analyzePageText(text, serverChoice = "ollama") {
+// Анализирует текст страницы или список файлов через выбранный AI сервис
+async function analyzePageText(textOrFilesList, serverChoice = "ollama") {
     const config = await getAIConfig();
     
     // Опредаем URL и модель
@@ -69,7 +69,7 @@ async function analyzePageText(text, serverChoice = "ollama") {
         model = config.ollama.model || "llama3";
     }
     
-    const prompt = `Анализируй текст веб-страницы и верни JSON:\n\n${text.substring(0, 2000)}`;
+    const prompt = `Анализируй текст веб-страницы и верни JSON:\n\n${textOrFilesList.substring(0, 2000)}`;
     
     // Запрос зависит от сервера
     if (serverChoice === "lmstudio" || config.server === "lmstudio") {

@@ -1,6 +1,7 @@
 // popup.js - логика расширения Binary Snap AI
 
 const snapBtn = document.getElementById('snapBtn');
+const folderBtn = document.getElementById('folderBtn');
 const payBtn = document.getElementById('payBtn');
 const statusDiv = document.getElementById('status');
 const aiResultDiv = document.getElementById('aiResult');
@@ -133,6 +134,48 @@ snapBtn.addEventListener('click', async () => {
         statusDiv.textContent = "Не удалось захватить страницу.";
     }
 });
+
+// Обработчик кнопки анализа папки
+folderBtn.addEventListener('click', async () => {
+    try {
+        // Проверяем поддержку File System Access API
+        if ('showDirectoryPicker' in window) {
+            const handle = await window.showDirectoryPicker();
+            statusDiv.textContent = `Выбрана папка: ${handle.name}`;
+            
+            // Получаем список файлов в папке
+            const files = [];
+            for await (const entry of handle.values()) {
+                if (entry.kind === 'file') {
+                    files.push(entry);
+                }
+            }
+            
+            statusDiv.textContent = `Найдено ${files.length} файлов для анализа...`;
+            aiResultDiv.innerHTML = `<strong>Файлы:</strong><br>${files.map(f => `- ${f.name}`).join('<br>')}`;
+            
+            // Создаем слепок папки
+            currentSnapData = {
+                source_url: `file://${handle.root.path}`,
+                thumbnail_base64: "",
+                binary_data: generateBinaryHash(handle.root.path + Date.now()),
+                metadata_ai: await analyzePageText(files.map(f => f.name).join('\n'), 'ollama')
+            };
+            
+            statusDiv.textContent = `Слепок папки сгенерирован! ID: ${generateSnapId()}`;
+        } else {
+            statusDiv.textContent = "Ваш браузер не поддерживает выбор папок. Используйте Chrome/Edge.";
+        }
+    } catch (error) {
+        console.error("Folder error:", error);
+        statusDiv.textContent = "Ошибка при выборе папки";
+    }
+});
+
+// Генерирует ID слепка
+function generateSnapId() {
+    return 'snap_' + Date.now().toString(36).toUpperCase();
+}
 
 // Обработчик кнопки оплаты (отключено)
 // payBtn.addEventListener('click', () => {
