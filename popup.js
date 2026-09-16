@@ -207,7 +207,14 @@ function sendMessageToContent(type) {
 // Отправляет слепок на FastAPI сервер
 async function sendSnapToServer(data) {
     try {
-        const response = await fetch('http://127.0.0.1:8000/api/add-snap', {
+        // Определяем endpoint в зависимости от типа источника
+        const endpoint = data.source_url.startsWith('file://') 
+            ? '/api/add-folder-snap'  // Локальная папка
+            : '/api/add-snap';         // Веб-страница
+        
+        console.log(`Отправка на ${endpoint}...`);
+        
+        const response = await fetch('http://127.0.0.1:8000' + endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
