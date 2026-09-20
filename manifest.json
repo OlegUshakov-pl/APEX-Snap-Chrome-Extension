@@ -3,19 +3,16 @@
   "name": "Binary Snap - AI Indexer",
   "version": "1.0",
   "description": "Создает бинарные слепки страниц с AI и отправляет их на сервер за 5 PLN.",
-  "permissions": [
-    "activeTab",
-    "storage"
-  ],
+  "permissions": ["activeTab", "scripting", "downloads", "tabs", "storage", "clipboardWrite"],
+  "host_permissions": ["<all_urls>"],
   "action": {
     "default_icon": {
       "16": "assets/icon16.png",
-      "48": "icons/icon48.png",
+      "48": "icons/icon48.png"
     },
-    "default_popup": "popup.html",
-  },
+  "default_popup": "popup.html",
   "icons": {
-    "48": "assets/icon-48.svg",
-    "128": "assets/icon-48.svg"
+    "16": "assets/icon-16.svg",
+    "48": "assets/icon-48.svg"
   }
 }
