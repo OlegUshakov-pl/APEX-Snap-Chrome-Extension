@@ -160,3 +160,34 @@ window.aiService = {
     saveAIConfig,
     DEFAULT_CONFIG
 };
+
+// Fetch models from Ollama
+async function fetchOllamaModels(url) {
+    try {
+        const response = await fetch(`${url}/api/models`);
+        if (!response.ok) throw new Error("Failed to fetch Ollama models");
+        const data = await response.json();
+        const models = Array.isArray(data) ? data : (data?.models || []);
+        return models.map(m => typeof m === 'string' ? m : (m?.id || '')).filter(Boolean);
+    } catch (error) {
+        console.error("Ollama model fetch error:", error);
+        return [];
+    }
+}
+
+// Fetch models from LM Studio
+async function fetchLMStudioModels(url) {
+    try {
+        const response = await fetch(`${url}/v1/models`);
+        if (!response.ok) throw new Error("Failed to fetch LM Studio models");
+        const data = await response.json();
+        const models = Array.isArray(data) ? data : (data?.data || []);
+        return models.map(m => typeof m === 'string' ? m : (m.id || '')).filter(Boolean);
+    } catch (error) {
+        console.error("LM Studio model fetch error:", error);
+        return [];
+    }
+}
+
+window.aiService.fetchOllamaModels = fetchOllamaModels;
+window.aiService.fetchLMStudioModels = fetchLMStudioModels;

@@ -34,6 +34,12 @@ async function initConfig() {
 function updateServerButtons() {
     ollamaBtn.classList.toggle('active', selectedServer === "ollama");
     lmstudioBtn.classList.toggle('active', selectedServer === "lmstudio");
+    
+    // Update label text dynamically
+    const modelLabel = document.getElementById('modelLabel');
+    if (modelLabel) {
+        modelLabel.textContent = selectedServer === 'ollama' ? 'Model (for Ollama):' : 'Model (for LM Studio):';
+    }
 }
 
 // Server switcher
@@ -234,5 +240,60 @@ function formatAIResult(metadata) {
     return html;
 }
 
+// Fetches available models from the selected server
+async function fetchAvailableModels(config) {
+    try {
+        if (selectedServer === "ollama") {
+            const url = `http://localhost:${serverUrlInput.value || '11161'}/api/models`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("Failed to fetch Ollama models");
+            const data = await response.json();
+            // Handle both array and object formats
+            const models = Array.isArray(data) ? data : (data?.models || []);
+            return models.map(m => typeof m === 'string' ? m : (m?.id || '')).filter(Boolean);
+        } else {
+            // LM Studio: model list comes from /v1/models endpoint (OpenAI-compatible)
+            const url = `${config?.lmstudio?.url || `http://localhost:${serverUrlInput.value || '8080'}`}/v1/models`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("Failed to fetch LM Studio models");
+            const data = await response.json();
+            // Handle both array and object formats
+            const models = Array.isArray(data) ? data : (data?.data || []);
+            return models.map(m => typeof m === 'string' ? m : (m.id || '')).filter(Boolean);
+        }
+    } catch (error) {
+        console.error("Model fetch error:", error);
+        return [];
+    }
+}
+
+// Updates the model select dropdown with fetched models
+async function updateModelSelect(models) {
+    const modelSelect = document.getElementById('modelSelect');
+    if (!modelSelect) return;
+    
+    // Clear existing options except the first default one
+    while (modelSelect.options.length > 1) {
+        modelSelect.remove(1);
+    }
+    
+    // Add fetched models
+    for (const model of models) {
+        const option = document.createElement('option');
+        option.value = model;
+        option.textContent = model;
+        modelSelect.appendChild(option);
+    }
+}
+
 // Initialize on popup load
-initConfig();
+async function initPopup() {
+    await initConfig();
+    
+    // Fetch available models and update dropdown
+    const config = await aiService.getAIConfig();
+    const models = await fetchAvailableModels(config);
+    await updateModelSelect(models);
+}
+
+initPopup();
