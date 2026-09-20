@@ -19,11 +19,12 @@
         /* Status */
         .status { margin-top: 10px; font-size: 12px; text-align: center; min-height: 20px; }
         
-        /* Server selection */
-        .server-select {
+        /* Server selection with lamp indicators */
+        .server-row {
             display: flex;
-            gap: 5px;
-            margin-bottom: 10px;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
         }
         .server-btn {
             padding: 6px 12px;
@@ -33,8 +34,6 @@
             background: white;
             cursor: pointer;
             color: #333;
-            width: auto;
-            margin: 0;
         }
         .server-btn.active {
             background: #0078D4;
@@ -42,35 +41,17 @@
             border-color: #0078D4;
         }
         
-        /* Configuration */
-        .config-section label { font-size: 11px; color: #666; display: block; margin-bottom: 4px; }
-        .config-section input {
-            width: calc(100% - 8px);
-            padding: 5px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            font-size: 12px;
-            margin-bottom: 6px;
-        }
-        
-        /* Connection indicator */
-        .connection-status {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-top: 8px;
-            font-size: 12px;
-        }
+        /* Lamp indicators */
         .lamp-indicator {
-            width: 10px;
-            height: 10px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
             display: inline-block;
             border: 1px solid #999;
         }
-        .lamp-green { background-color: #28a745; box-shadow: 0 0 4px #28a745; }
-        .lamp-red { background-color: #dc3545; box-shadow: 0 0 4px #dc3545; }
-        .lamp-yellow { background-color: #ffc107; box-shadow: 0 0 4px #ffc107; }
+        .lamp-green { background-color: #28a745; box-shadow: 0 0 5px #28a745; }
+        .lamp-red { background-color: #dc3545; box-shadow: 0 0 5px #dc3545; }
+        .lamp-yellow { background-color: #ffc107; box-shadow: 0 0 5px #ffc107; }
         
         /* Available Models Display */
         .models-list {
@@ -90,11 +71,18 @@
 <body>
     <h3>Binary Snap AI</h3>
     
-    <!-- Server selection -->
-    <div class="server-select">
+    <!-- Server selection with lamp indicators -->
+    <div class="server-row">
+        <span class="lamp-indicator lamp-yellow" id="ollamaLamp"></span>
         <button id="ollamaBtn" class="server-btn active">Ollama</button>
+    </div>
+    <div class="server-row">
+        <span class="lamp-indicator lamp-yellow" id="lmstudioLamp"></span>
         <button id="lmstudioBtn" class="server-btn">LM Studio</button>
     </div>
+    
+    <!-- Refresh button -->
+    <button id="refreshBtn" class="refresh-btn">↻ Refresh Connection</button>
     
     <!-- Snapshot generation button -->
     <button id="snapBtn">Generate Snapshot (Free)</button>
@@ -125,13 +113,6 @@
             <option value="gemma2">Gemma 2</option>
             <option value="phi3">Phi 3</option>
         </select>
-    </div>
-    
-    <!-- Connection Status -->
-    <div class="connection-status" id="connectionStatus">
-        <span class="lamp-indicator lamp-yellow" id="connLamp"></span>
-        <label id="connLabel">Checking...</label>
-        <span id="connText"></span>
     </div>
     
     <!-- Available Models Display -->

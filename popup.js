@@ -252,18 +252,17 @@ function formatAIResult(metadata) {
     return html;
 }
 
-// Checks connection status and updates the lamp indicator
+// Checks connection status and updates individual lamp indicators
 async function checkConnectionStatus() {
-    const connLamp = document.getElementById('connLamp');
-    const connLabel = document.getElementById('connLabel');
-    const connText = document.getElementById('connText');
+    const ollamaLamp = document.getElementById('ollamaLamp');
+    const lmstudioLamp = document.getElementById('lmstudioLamp');
     
-    if (!connLamp || !connLabel || !connText) return;
+    if (!ollamaLamp || !lmstudioLamp) return;
     
     const ollamaUrl = `http://localhost:${serverUrlInput.value || '11161'}`;
     const lmstudioUrl = `http://localhost:${serverUrlInput.value || '8080'}`;
     
-    // Try Ollama first
+    // Try Ollama
     let ollamaOk = false;
     try {
         const response = await fetch(`${ollamaUrl}/api/models`);
@@ -281,24 +280,30 @@ async function checkConnectionStatus() {
         /* LM Studio not available */
     }
     
-    // Update lamp color based on connection
-    if (ollamaOk && lmstudioOk) {
-        connLamp.className = 'lamp-indicator lamp-yellow';
-        connLabel.textContent = 'Both:';
-        connText.textContent = 'Ollama + LM Studio connected';
-    } else if (ollamaOk) {
-        connLamp.className = 'lamp-indicator lamp-green';
-        connLabel.textContent = 'Ollama:';
-        connText.textContent = 'Connected ✓';
-    } else if (lmstudioOk) {
-        connLamp.className = 'lamp-indicator lamp-green';
-        connLabel.textContent = 'LM Studio:';
-        connText.textContent = 'Connected ✓';
-    } else {
-        connLamp.className = 'lamp-indicator lamp-red';
-        connLabel.textContent = 'Status:';
-        connText.textContent = 'No connection';
-    }
+    // Update Ollama lamp
+    ollamaLamp.className = ollamaOk ? 'lamp-indicator lamp-green' : 'lamp-indicator lamp-red';
+    
+    // Update LM Studio lamp
+    lmstudioLamp.className = lmstudioOk ? 'lamp-indicator lamp-green' : 'lamp-indicator lamp-red';
+}
+
+// Refresh connection button handler
+const refreshBtn = document.getElementById('refreshBtn');
+if (refreshBtn) {
+    refreshBtn.addEventListener('click', async () => {
+        // Set lamps to yellow (checking)
+        const ollamaLamp = document.getElementById('ollamaLamp');
+        const lmstudioLamp = document.getElementById('lmstudioLamp');
+        
+        if (ollamaLamp) ollamaLamp.className = 'lamp-indicator lamp-yellow';
+        if (lmstudioLamp) lmstudioLamp.className = 'lamp-indicator lamp-yellow';
+        
+        // Check connection
+        await checkConnectionStatus();
+        
+        // Refresh models display
+        updateAvailableModelsDisplay();
+    });
 }
 
 // Fetches available models from the selected server
