@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Binary Snap - AI Indexer",
   "version": "1.0",
-  "description": "Создает бинарные слепки страниц с AI и отправляет их на сервер за 5 PLN.",
+  "description": "Creates binary snapshots of web pages with AI indexing and sends them to a server for 5 PLN.",
   "permissions": ["activeTab", "scripting", "downloads", "tabs", "storage", "clipboardWrite"],
   "host_permissions": ["<all_urls>"],
   "action": {

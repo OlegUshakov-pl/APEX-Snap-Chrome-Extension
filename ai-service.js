@@ -1,38 +1,38 @@
-// ai-service.js - AI анализатор страниц (поддерживает Ollama и LM Studio)
+// ai-service.js - AI page analyzer (supports Ollama and LM Studio)
 
 const DEFAULT_CONFIG = {
-    // Сервер AI по умолчанию (Ollama или LMStudio)
+    // Default AI server (Ollama or LMStudio)
     server: "ollama",
     
-    // Конфигурация Ollama
+    // Ollama configuration
     ollama: {
         url: "http://localhost:11161",
         model: "llama3"
     },
     
-    // Конфигурация LM Studio
+    // LM Studio configuration
     lmstudio: {
         url: "http://localhost:8080",
-        model: "" // LM Studio использует модель загруженную в UI
+        model: "" // LM Studio uses the model loaded in UI
     }
 };
 
-// Системный промпт для анализа страницы
-const SYSTEM_PROMPT = `Ты AI-анализатор веб-страниц. Проанализируй текст и верни JSON с такими полями:
-- tags: массив из 3-5 ключевых тегов (strings)
-- sentiment: число от -1 до 1 (отрицательный до положительного)
-- summary: краткое описание страницы (до 2 предложений)
-- category: категория страницы (news, tech, sports, politics, entertainment, education, other)
+// System prompt for page analysis
+const SYSTEM_PROMPT = `You are a web page AI analyzer. Analyze the text and return JSON with these fields:
+- tags: array of 3-5 keyword tags (strings)
+- sentiment: number from -1 to 1 (negative to positive)
+- summary: brief description of the page (up to 2 sentences)
+- category: page category (news, tech, sports, politics, entertainment, education, other)
 
-Пример вывода:
+Example output:
 {
-  "tags": ["тег1", "тег2"],
+  "tags": ["tag1", "tag2"],
   "sentiment": 0.5,
-  "summary": "Краткое описание...",
+  "summary": "Brief description...",
   "category": "news"
 }`;
 
-// Получает текущую конфигурацию из storage или default
+// Gets current configuration from storage or default
 function getAIConfig() {
     return new Promise((resolve) => {
         chrome.storage.sync.get(['ai_config'], (result) => {
@@ -42,7 +42,7 @@ function getAIConfig() {
     });
 }
 
-// Сохраняет конфигурацию AI
+// Saves AI configuration
 function saveAIConfig(config) {
     return new Promise((resolve) => {
         chrome.storage.sync.set({ ai_config: config }, () => {
@@ -51,16 +51,16 @@ function saveAIConfig(config) {
     });
 }
 
-// Анализирует текст страницы или список файлов через выбранный AI сервис
+// Analyzes page text or list of files through the selected AI service
 async function analyzePageText(textOrFilesList, serverChoice = "ollama") {
     const config = await getAIConfig();
     
-    // Опредаем URL и модель
+    // Determine URL and model
     let apiUrl;
     let model;
     
     if (serverChoice === "lmstudio" || config.server === "lmstudio") {
-        // LM Studio использует OpenAI-compatible endpoint
+        // LM Studio uses OpenAI-compatible endpoint
         apiUrl = `${config.lmstudio.url}/v1/chat/completions`;
         model = config.lmstudio.model || null; // LM Studio uses loaded model
     } else {
@@ -69,9 +69,9 @@ async function analyzePageText(textOrFilesList, serverChoice = "ollama") {
         model = config.ollama.model || "llama3";
     }
     
-    const prompt = `Анализируй текст веб-страницы и верни JSON:\n\n${textOrFilesList.substring(0, 2000)}`;
+    const prompt = `Analyze web page text and return JSON:\n\n${textOrFilesList.substring(0, 2000)}`;
     
-    // Запрос зависит от сервера
+    // Request depends on server
     if (serverChoice === "lmstudio" || config.server === "lmstudio") {
         return await callLMStudio(apiUrl, prompt);
     } else {
@@ -79,7 +79,7 @@ async function analyzePageText(textOrFilesList, serverChoice = "ollama") {
     }
 }
 
-// Вызов Ollama API
+// Calls Ollama API
 async function callOllama(url, model, text) {
     try {
         const response = await fetch(url, {
@@ -87,7 +87,7 @@ async function callOllama(url, model, text) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 model: model,
-                prompt: `${SYSTEM_PROMPT}\n\nТекст страницы:\n${text}`,
+                prompt: `${SYSTEM_PROMPT}\n\nPage text:\n${text}`,
                 stream: false
             })
         });
@@ -100,7 +100,7 @@ async function callOllama(url, model, text) {
     }
 }
 
-// Вызов LM Studio API (OpenAI-compatible)
+// Calls LM Studio API (OpenAI-compatible)
 async function callLMStudio(url, text) {
     try {
         const response = await fetch(url, {
@@ -109,7 +109,7 @@ async function callLMStudio(url, text) {
             body: JSON.stringify({
                 messages: [
                     { role: "system", content: SYSTEM_PROMPT },
-                    { role: "user", content: `Текст страницы:\n${text}` }
+                    { role: "user", content: `Page text:\n${text}` }
                 ],
                 temperature: 0.7,
                 max_tokens: 500
@@ -125,9 +125,9 @@ async function callLMStudio(url, text) {
     }
 }
 
-// Парсит ответ AI и извлекает JSON
+// Parses AI response and extracts JSON
 function parseAIResponse(text) {
-    // Ищет JSON в тексте
+    // Search for JSON in text
     const jsonMatch = text.match(/\{[^]*\}/);
     if (jsonMatch) {
         try {
@@ -138,22 +138,22 @@ function parseAIResponse(text) {
         }
     }
     
-    // Fallback если AI не вернул корректный JSON
+    // Fallback if AI doesn't return correct JSON
     return generateFallbackMetadata(text);
 }
 
-// Генерирует fallback metadata если AI недоступен
+// Generates fallback metadata if AI is unavailable
 function generateFallbackMetadata(text) {
     const words = text.split(/\s+/).slice(0, 5);
     return {
         tags: [...new Set(words.map(w => w.trim()).filter(w => w.length > 3))],
-        sentiment: Math.random() * 2 - 1, // случайное для placeholder
+        sentiment: Math.random() * 2 - 1, // random for placeholder
         summary: text.substring(0, 150) + "...",
         category: "other"
     };
 }
 
-// Экспорт функций
+// Export functions
 window.aiService = {
     analyzePageText,
     getAIConfig,

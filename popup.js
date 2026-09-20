@@ -1,27 +1,27 @@
-// popup.js - логика расширения Binary Snap AI
+// popup.js - logic for Binary Snap AI extension
 
 const snapBtn = document.getElementById('snapBtn');
 const folderBtn = document.getElementById('folderBtn');
 const statusDiv = document.getElementById('status');
 const aiResultDiv = document.getElementById('aiResult');
 
-// Кнопки выбора сервера
+// Server selection buttons
 const ollamaBtn = document.getElementById('ollamaBtn');
 const lmstudioBtn = document.getElementById('lmstudioBtn');
 
-// Поля конфигурации
+// Configuration inputs
 const serverUrlInput = document.getElementById('serverUrl');
 const modelNameInput = document.getElementById('modelName');
 
 let currentSnapData = null;
-let selectedServer = "ollama"; // default: ollama или lmstudio
+let selectedServer = "ollama"; // default: ollama or lmstudio
 
-// Получаем текущую конфигурацию AI на старте
+// Get current AI configuration on startup
 async function initConfig() {
     const config = await aiService.getAIConfig();
     
     if (config) {
-        // Заполняем поля из storage
+        // Populate fields from storage
         serverUrlInput.value = config.ollama?.url?.replace('http://localhost:', '') || '11161';
         modelNameInput.value = config.ollama?.model || 'llama3';
         
@@ -30,13 +30,13 @@ async function initConfig() {
     }
 }
 
-// Обновляет кнопки выбора сервера
+// Updates server selection buttons
 function updateServerButtons() {
     ollamaBtn.classList.toggle('active', selectedServer === "ollama");
     lmstudioBtn.classList.toggle('active', selectedServer === "lmstudio");
 }
 
-// Переключатель серверов
+// Server switcher
 ollamaBtn.addEventListener('click', () => {
     selectedServer = "ollama";
     updateServerButtons();
@@ -49,7 +49,7 @@ lmstudioBtn.addEventListener('click', () => {
     saveCurrentConfig();
 });
 
-// Сохраняет текущую конфигурацию
+// Saves current configuration
 async function saveCurrentConfig() {
     const config = await aiService.getAIConfig();
     config.server = selectedServer;
@@ -64,25 +64,25 @@ async function saveCurrentConfig() {
     await aiService.saveAIConfig(config);
 }
 
-// Обработчик кнопки "Сгенерировать слепок"
+// Handler for "Generate Snapshot" button
 snapBtn.addEventListener('click', async () => {
-    statusDiv.textContent = "Генерация слепка...";
+    statusDiv.textContent = "Generating snapshot...";
     aiResultDiv.textContent = "";
     
-    // 1. Получаем данные активной вкладки
+    // 1. Get active tab data
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     
     if (!tab?.url) {
-        statusDiv.textContent = "Нет активной страницы.";
+        statusDiv.textContent = "No active page found.";
         return;
     }
     
-    // 2. Отправляем команду content script'у для захвата данных
+    // 2. Send command to content script to capture data
     const pageData = await sendMessageToContent("CAPTURE");
     
     if (pageData) {
-        // 3. Анализируем текст через AI сервис
-        statusDiv.textContent = "Анализ через AI...";
+        // 3. Analyze text via AI service
+        statusDiv.textContent = "Analyzing via AI...";
         
         try {
             const aiMetadata = await window.aiService.analyzePageText(
@@ -90,7 +90,7 @@ snapBtn.addEventListener('click', async () => {
                 selectedServer
             );
             
-            // 4. Формируем слепок с реальными данными
+            // 4. Build snapshot with real data
             currentSnapData = {
                 source_url: tab.url,
                 thumbnail_base64: pageData.thumbnail || "",
@@ -98,48 +98,47 @@ snapBtn.addEventListener('click', async () => {
                 metadata_ai: aiMetadata
             };
             
-            // Показываем результат AI анализа
+            // Display AI analysis result
             aiResultDiv.innerHTML = formatAIResult(aiMetadata);
             
-            statusDiv.textContent = "Отправка на сервер...";
+            statusDiv.textContent = "Sending to server...";
             
-            // 5. Отправляем данные на FastAPI сервер
+            // 5. Send data to FastAPI server
             const result = await sendSnapToServer(currentSnapData);
             
             if (result?.status === "success") {
-                statusDiv.innerHTML = `Слепок сохранен!<br>ID: ${result.snap_id}`;
-                // payBtn.style.display = 'block'; // Blik оплата отключена
+                statusDiv.innerHTML = `Snapshot saved!<br>ID: ${result.snap_id}`;
             } else {
-                // Даже если сервер недоступен, показываем результат AI
-                statusDiv.textContent = "Слепок сгенерирован локально.";
+                // Even if server is unavailable, show AI result
+                statusDiv.textContent = "Snapshot generated locally.";
             }
             
         } catch (error) {
             console.error("AI error:", error);
-            statusDiv.textContent = "Ошибка AI анализа. Использую fallback...";
+            statusDiv.textContent = "AI analysis failed. Using fallback...";
             
-            // Fallback: используем basic metadata без AI
+            // Fallback: use basic metadata without AI
             currentSnapData = {
                 source_url: tab.url,
                 thumbnail_base64: "",
                 binary_data: generateBinaryHash(tab.url + Date.now()),
-                metadata_ai: { tags: [], sentiment: 0, summary: "AI недоступен", category: "other" }
+                metadata_ai: { tags: [], sentiment: 0, summary: "AI unavailable", category: "other" }
             };
         }
     } else {
-        statusDiv.textContent = "Не удалось захватить страницу.";
+        statusDiv.textContent = "Failed to capture page.";
     }
 });
 
-// Обработчик кнопки анализа папки
+// Handler for folder analysis button
 folderBtn.addEventListener('click', async () => {
     try {
-        // Проверяем поддержку File System Access API
+        // Check File System Access API support
         if ('showDirectoryPicker' in window) {
             const handle = await window.showDirectoryPicker();
-            statusDiv.textContent = `Выбрана папка: ${handle.name}`;
+            statusDiv.textContent = `Selected folder: ${handle.name}`;
             
-            // Получаем список файлов в папке
+            // Get list of files in folder
             const files = [];
             for await (const entry of handle.values()) {
                 if (entry.kind === 'file') {
@@ -147,44 +146,33 @@ folderBtn.addEventListener('click', async () => {
                 }
             }
             
-            statusDiv.textContent = `Найдено ${files.length} файлов для анализа...`;
-            aiResultDiv.innerHTML = `<strong>Файлы:</strong><br>${files.map(f => `- ${f.name}`).join('<br>')}`;
+            statusDiv.textContent = `Found ${files.length} files for analysis...`;
+            aiResultDiv.innerHTML = `<strong>Files:</strong><br>${files.map(f => `- ${f.name}`).join('<br>')}`;
             
-            // Создаем слепок папки
+            // Create folder snapshot
             currentSnapData = {
                 source_url: `file://${handle.root.path}`,
                 thumbnail_base64: "",
                 binary_data: generateBinaryHash(handle.root.path + Date.now()),
-                metadata_ai: await analyzePageText(files.map(f => f.name).join('\n'), 'ollama')
+                metadata_ai: await aiService.analyzePageText(files.map(f => f.name).join('\n'), 'ollama')
             };
             
-            statusDiv.textContent = `Слепок папки сгенерирован! ID: ${generateSnapId()}`;
+            statusDiv.textContent = `Folder snapshot generated! ID: ${generateSnapId()}`;
         } else {
-            statusDiv.textContent = "Ваш браузер не поддерживает выбор папок. Используйте Chrome/Edge.";
+            statusDiv.textContent = "Your browser doesn't support folder selection. Use Chrome/Edge.";
         }
     } catch (error) {
         console.error("Folder error:", error);
-        statusDiv.textContent = "Ошибка при выборе папки";
+        statusDiv.textContent = "Error selecting folder";
     }
 });
 
-// Генерирует ID слепка
+// Generates snapshot ID
 function generateSnapId() {
     return 'snap_' + Date.now().toString(36).toUpperCase();
 }
 
-// Обработчик кнопки оплаты (отключено)
-// payBtn.addEventListener('click', () => {
-//     if (!currentSnapData) return;
-//     
-//     statusDiv.innerHTML = "Открывается окно Blik...";
-//     
-//     setTimeout(() => {
-//         statusDiv.innerHTML = "Оплата прошла успешно!<br>Слепок активирован.";
-//     }, 2000);
-// });
-
-// Отправляет сообщение content script'у и получает ответ
+// Sends message to content script and returns response
 function sendMessageToContent(type) {
     return new Promise((resolve) => {
         const [tab] = chrome.tabs.query({ active: true, currentWindow: true });
@@ -200,15 +188,15 @@ function sendMessageToContent(type) {
     });
 }
 
-// Отправляет слепок на FastAPI сервер
+// Sends snapshot to FastAPI server
 async function sendSnapToServer(data) {
     try {
-        // Определяем endpoint в зависимости от типа источника
+        // Determine endpoint based on source type
         const endpoint = data.source_url.startsWith('file://') 
-            ? '/api/add-folder-snap'  // Локальная папка
-            : '/api/add-snap';         // Веб-страница
+            ? '/api/add-folder-snap'  // Local folder
+            : '/api/add-snap';         // Web page
         
-        console.log(`Отправка на ${endpoint}...`);
+        console.log(`Sending to ${endpoint}...`);
         
         const response = await fetch(serverUrlInput.value + endpoint, {
             method: 'POST',
@@ -223,7 +211,7 @@ async function sendSnapToServer(data) {
     }
 }
 
-// Генерирует бинарный hash из строки
+// Generates binary hash from string
 function generateBinaryHash(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -234,7 +222,7 @@ function generateBinaryHash(str) {
     return hash.toString(2);
 }
 
-// Форматирует результат AI для отображения
+// Formats AI result for display
 function formatAIResult(metadata) {
     if (!metadata) return "";
     
@@ -246,5 +234,5 @@ function formatAIResult(metadata) {
     return html;
 }
 
-// Инициализация при загрузке popup'а
+// Initialize on popup load
 initConfig();

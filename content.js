@@ -1,15 +1,15 @@
-// content.js - работает внутри веб-страницы для захвата данных
+// content.js - runs within web page to capture data
 
-// Слушает команды от popup'а через chrome.runtime.onMessage
+// Listens for commands from popup via chrome.runtime.onMessage
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === "CAPTURE") {
-        // 1. Получаем текст страницы
+        // 1. Get page text
         const textContent = document.body.innerText;
         
-        // 2. Берем фрагмент текста для AI анализа (первые 2000 символов)
+        // 2. Take text snippet for AI analysis (first 2000 characters)
         const textSnippet = textContent.substring(0, 2000);
         
-        // 3. Собираем данные страницы
+        // 3. Collect page data
         const pageData = {
             url: window.location.href,
             title: document.title,
@@ -17,26 +17,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             timestamp: Date.now()
         };
         
-        console.log("Данные страницы собраны:", pageData);
+        console.log("Page data collected:", pageData);
         
-        // Отправляем ответ обратно в popup
+        // Send response back to popup
         sendResponse(pageData);
     }
 });
 
-// Дополнительно: можно сделать скриншот если нужно (через HTML5 Canvas)
+// Additionally: can take screenshot if needed (via HTML5 Canvas)
 function captureScreenshot() {
     return new Promise((resolve) => {
         const canvas = document.createElement('canvas');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         
-        // Рендерим страницу на canvas
+        // Render page on canvas
         const ctx = canvas.getContext('2d');
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Получаем все элементы страницы
+        // Get all page elements
         document.querySelectorAll('*').forEach((el) => {
             if (el.children.length === 0 && el.innerText.trim()) {
                 ctx.font = `${getComputedStyle(el).fontSize}`;
@@ -53,4 +53,4 @@ function captureScreenshot() {
     });
 }
 
-window.aiService = window.aiService || {}; // для совместимости с ai-service.js
+window.aiService = window.aiService || {}; // for compatibility with ai-service.js
