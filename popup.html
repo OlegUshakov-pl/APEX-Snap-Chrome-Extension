@@ -53,6 +53,36 @@
             margin-bottom: 6px;
         }
         
+        /* Connection indicator */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+        .lamp-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            border: 1px solid #999;
+        }
+        .lamp-green { background-color: #28a745; box-shadow: 0 0 4px #28a745; }
+        .lamp-red { background-color: #dc3545; box-shadow: 0 0 4px #dc3545; }
+        .lamp-yellow { background-color: #ffc107; box-shadow: 0 0 4px #ffc107; }
+        
+        /* Available Models Display */
+        .models-list {
+            font-size: 11px;
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 8px;
+            max-height: 200px;
+            overflow: auto;
+        }
+        
         /* Result display */
         .result { font-size: 11px; background: white; padding: 8px; border-radius: 4px; margin-top: 8px; max-height: 150px; overflow: auto; }
     </style>
@@ -97,9 +127,17 @@
         </select>
     </div>
     
+    <!-- Connection Status -->
+    <div class="connection-status" id="connectionStatus">
+        <span class="lamp-indicator lamp-yellow" id="connLamp"></span>
+        <label id="connLabel">Checking...</label>
+        <span id="connText"></span>
+    </div>
+    
     <!-- Available Models Display -->
-    <label>Available Models:</label>
-    <div class="result" id="availableModels" style="max-height: 200px;">No models detected</div>
+    <div class="models-list" id="availableModels">
+        <em>Scanning for models...</em>
+    </div>
     
     <!-- Scripts -->
     <script src="ai-service.js"></script>

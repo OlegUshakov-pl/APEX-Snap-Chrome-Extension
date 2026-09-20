@@ -49,6 +49,7 @@ ollamaBtn.addEventListener('click', () => {
     saveCurrentConfig();
     // Refresh model display on server switch
     updateAvailableModelsDisplay();
+    checkConnectionStatus();
 });
 
 lmstudioBtn.addEventListener('click', () => {
@@ -57,11 +58,13 @@ lmstudioBtn.addEventListener('click', () => {
     saveCurrentConfig();
     // Refresh model display on server switch
     updateAvailableModelsDisplay();
+    checkConnectionStatus();
 });
 
 // Refresh models when server URL changes
 serverUrlInput.addEventListener('change', () => {
     updateAvailableModelsDisplay();
+    checkConnectionStatus();
 });
 
 // Saves current configuration
@@ -249,6 +252,55 @@ function formatAIResult(metadata) {
     return html;
 }
 
+// Checks connection status and updates the lamp indicator
+async function checkConnectionStatus() {
+    const connLamp = document.getElementById('connLamp');
+    const connLabel = document.getElementById('connLabel');
+    const connText = document.getElementById('connText');
+    
+    if (!connLamp || !connLabel || !connText) return;
+    
+    const ollamaUrl = `http://localhost:${serverUrlInput.value || '11161'}`;
+    const lmstudioUrl = `http://localhost:${serverUrlInput.value || '8080'}`;
+    
+    // Try Ollama first
+    let ollamaOk = false;
+    try {
+        const response = await fetch(`${ollamaUrl}/api/models`);
+        ollamaOk = response.ok;
+    } catch (e) {
+        /* Ollama not available */
+    }
+    
+    // Try LM Studio
+    let lmstudioOk = false;
+    try {
+        const response = await fetch(`${lmstudioUrl}/v1/models`);
+        lmstudioOk = response.ok;
+    } catch (e) {
+        /* LM Studio not available */
+    }
+    
+    // Update lamp color based on connection
+    if (ollamaOk && lmstudioOk) {
+        connLamp.className = 'lamp-indicator lamp-yellow';
+        connLabel.textContent = 'Both:';
+        connText.textContent = 'Ollama + LM Studio connected';
+    } else if (ollamaOk) {
+        connLamp.className = 'lamp-indicator lamp-green';
+        connLabel.textContent = 'Ollama:';
+        connText.textContent = 'Connected ✓';
+    } else if (lmstudioOk) {
+        connLamp.className = 'lamp-indicator lamp-green';
+        connLabel.textContent = 'LM Studio:';
+        connText.textContent = 'Connected ✓';
+    } else {
+        connLamp.className = 'lamp-indicator lamp-red';
+        connLabel.textContent = 'Status:';
+        connText.textContent = 'No connection';
+    }
+}
+
 // Fetches available models from the selected server
 async function fetchAvailableModels(config) {
     try {
@@ -357,6 +409,9 @@ async function updateAvailableModelsDisplay() {
 // Initialize on popup load
 async function initPopup() {
     await initConfig();
+    
+    // Check connection status and update lamp
+    await checkConnectionStatus();
     
     // Fetch available models and update dropdown
     const config = await aiService.getAIConfig();
