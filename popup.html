@@ -87,7 +87,14 @@
         <input type="text" id="serverUrl" placeholder="localhost:11161 or localhost:8080"/>
         
         <label>Model (for Ollama):</label>
-        <input type="text" id="modelName" placeholder="llama3"/>
+        <select id="modelSelect">
+            <option value="llama3">Llama 3</option>
+            <option value="llama2">Llama 2</option>
+            <option value="llama2-8b">Llama 2 (8B)</option>
+            <option value="mistral">Mistral</option>
+            <option value="gemma2">Gemma 2</option>
+            <option value="phi3">Phi 3</option>
+        </select>
     </div>
     
     <!-- Scripts -->
