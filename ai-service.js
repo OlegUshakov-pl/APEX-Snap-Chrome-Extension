@@ -6,13 +6,13 @@ const DEFAULT_CONFIG = {
     
     // Ollama configuration
     ollama: {
-        url: "http://localhost:11161",
+        url: "http://localhost:11434",
         model: "llama3"
     },
     
     // LM Studio configuration
     lmstudio: {
-        url: "http://localhost:8080",
+        url: "http://localhost:1234",
         model: "" // LM Studio uses the model loaded in UI
     }
 };

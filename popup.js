@@ -22,7 +22,7 @@ async function initConfig() {
     
     if (config) {
         // Populate fields from storage
-        serverUrlInput.value = config.ollama?.url?.replace('http://localhost:', '') || '11161';
+        serverUrlInput.value = config.ollama?.url?.replace('http://localhost:', '') || '11434';
         modelNameInput.value = config.ollama?.model || 'llama3';
         
         selectedServer = config.server || "ollama";
@@ -73,10 +73,10 @@ async function saveCurrentConfig() {
     config.server = selectedServer;
     
     if (selectedServer === "ollama") {
-        config.ollama.url = `http://localhost:${serverUrlInput.value || '11161'}`;
+        config.ollama.url = `http://localhost:${serverUrlInput.value || '11434'}`;
         config.ollama.model = modelNameInput.value || "llama3";
     } else {
-        config.lmstudio.url = `http://localhost:${serverUrlInput.value || '8080'}`;
+        config.lmstudio.url = `http://localhost:${serverUrlInput.value || '1234'}`;
     }
     
     await aiService.saveAIConfig(config);
@@ -259,8 +259,8 @@ async function checkConnectionStatus() {
     
     if (!ollamaLamp || !lmstudioLamp) return;
     
-    const ollamaUrl = `http://localhost:${serverUrlInput.value || '11161'}`;
-    const lmstudioUrl = `http://localhost:${serverUrlInput.value || '8080'}`;
+    const ollamaUrl = `http://localhost:${serverUrlInput.value || '11434'}`;
+    const lmstudioUrl = `http://localhost:${serverUrlInput.value || '1234'}`;
     
     // Try Ollama
     let ollamaOk = false;
@@ -310,7 +310,7 @@ if (refreshBtn) {
 async function fetchAvailableModels(config) {
     try {
         if (selectedServer === "ollama") {
-            const url = `http://localhost:${serverUrlInput.value || '11161'}/api/models`;
+            const url = `http://localhost:${serverUrlInput.value || '11434'}/api/models`;
             const response = await fetch(url);
             if (!response.ok) throw new Error("Failed to fetch Ollama models");
             const data = await response.json();
@@ -319,7 +319,7 @@ async function fetchAvailableModels(config) {
             return models.map(m => typeof m === 'string' ? m : (m?.id || '')).filter(Boolean);
         } else {
             // LM Studio: model list comes from /v1/models endpoint (OpenAI-compatible)
-            const url = `${config?.lmstudio?.url || `http://localhost:${serverUrlInput.value || '8080'}`}/v1/models`;
+            const url = `${config?.lmstudio?.url || `http://localhost:${serverUrlInput.value || '1234'}`}/v1/models`;
             const response = await fetch(url);
             if (!response.ok) throw new Error("Failed to fetch LM Studio models");
             const data = await response.json();
@@ -359,8 +359,8 @@ async function updateAvailableModelsDisplay() {
     
     try {
         // Fetch models from both Ollama and LM Studio
-        const ollamaUrl = `http://localhost:${serverUrlInput.value || '11161'}`;
-        const lmstudioUrl = `http://localhost:${serverUrlInput.value || '8080'}`;
+        const ollamaUrl = `http://localhost:${serverUrlInput.value || '11434'}`;
+        const lmstudioUrl = `http://localhost:${serverUrlInput.value || '1234'}`;
         
         // Try fetching from Ollama
         let ollamaModels = [];

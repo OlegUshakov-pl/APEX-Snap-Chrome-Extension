@@ -69,20 +69,18 @@
     </style>
 </head>
 <body>
-    <h3>Binary Snap AI</h3>
+    <div style="text-align: center; margin-bottom: 10px;">
+        <img src="assets/apexscan-logo.svg" alt="Apex Scan" style="height: 28px; vertical-align: middle;">
+    </div>
     
-    <!-- Server selection with lamp indicators -->
+    <!-- Server selection with lamp indicators in one row -->
     <div class="server-row">
         <span class="lamp-indicator lamp-yellow" id="ollamaLamp"></span>
         <button id="ollamaBtn" class="server-btn active">Ollama</button>
-    </div>
-    <div class="server-row">
         <span class="lamp-indicator lamp-yellow" id="lmstudioLamp"></span>
         <button id="lmstudioBtn" class="server-btn">LM Studio</button>
+        <button id="refreshBtn" class="server-btn">↻ Refresh</button>
     </div>
-    
-    <!-- Refresh button -->
-    <button id="refreshBtn" class="refresh-btn">↻ Refresh Connection</button>
     
     <!-- Snapshot generation button -->
     <button id="snapBtn">Generate Snapshot (Free)</button>
@@ -102,7 +100,7 @@
     <!-- Server configuration -->
     <div class="config-section">
         <label>Server URL:</label>
-        <input type="text" id="serverUrl" placeholder="localhost:11161 or localhost:8080"/>
+        <input type="text" id="serverUrl" placeholder="11434 (Ollama) / 1234 (LM Studio)" value="11434" />
         
         <label id="modelLabel">Model (for Ollama):</label>
         <select id="modelSelect">
