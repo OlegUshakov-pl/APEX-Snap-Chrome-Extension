@@ -47,12 +47,21 @@ ollamaBtn.addEventListener('click', () => {
     selectedServer = "ollama";
     updateServerButtons();
     saveCurrentConfig();
+    // Refresh model display on server switch
+    updateAvailableModelsDisplay();
 });
 
 lmstudioBtn.addEventListener('click', () => {
     selectedServer = "lmstudio";
     updateServerButtons();
     saveCurrentConfig();
+    // Refresh model display on server switch
+    updateAvailableModelsDisplay();
+});
+
+// Refresh models when server URL changes
+serverUrlInput.addEventListener('change', () => {
+    updateAvailableModelsDisplay();
 });
 
 // Saves current configuration
@@ -286,6 +295,65 @@ async function updateModelSelect(models) {
     }
 }
 
+// Updates the available models display section
+async function updateAvailableModelsDisplay() {
+    const modelsDiv = document.getElementById('availableModels');
+    if (!modelsDiv) return;
+    
+    try {
+        // Fetch models from both Ollama and LM Studio
+        const ollamaUrl = `http://localhost:${serverUrlInput.value || '11161'}`;
+        const lmstudioUrl = `http://localhost:${serverUrlInput.value || '8080'}`;
+        
+        // Try fetching from Ollama
+        let ollamaModels = [];
+        try {
+            const response = await fetch(`${ollamaUrl}/api/models`);
+            if (response.ok) {
+                const data = await response.json();
+                ollamaModels = Array.isArray(data) ? data : (data?.models || []);
+            }
+        } catch (e) { /* Ollama not available */ }
+        
+        // Try fetching from LM Studio
+        let lmstudioModels = [];
+        try {
+            const response = await fetch(`${lmstudioUrl}/v1/models`);
+            if (response.ok) {
+                const data = await response.json();
+                lmstudioModels = Array.isArray(data) ? data : (data?.data || []).map(m => m.id || '');
+            }
+        } catch (e) { /* LM Studio not available */ }
+        
+        // Display results
+        let html = '';
+        if (ollamaModels.length > 0) {
+            html += '<strong>Ollama:</strong><br>';
+            ollamaModels.forEach(m => {
+                const modelName = typeof m === 'string' ? m : (m.id || '');
+                if (modelName) html += `- ${modelName}<br>`;
+            });
+            html += '<br>';
+        }
+        
+        if (lmstudioModels.length > 0) {
+            html += '<strong>LM Studio:</strong><br>';
+            lmstudioModels.forEach(m => {
+                html += `- ${m}<br>`;
+            });
+        }
+        
+        if (!html) {
+            html = 'No models detected (ensure Ollama or LM Studio is running)';
+        }
+        
+        modelsDiv.innerHTML = html;
+    } catch (error) {
+        console.error('Model display error:', error);
+        document.getElementById('availableModels').innerHTML = 'Error fetching models';
+    }
+}
+
 // Initialize on popup load
 async function initPopup() {
     await initConfig();
@@ -294,6 +362,9 @@ async function initPopup() {
     const config = await aiService.getAIConfig();
     const models = await fetchAvailableModels(config);
     await updateModelSelect(models);
+    
+    // Also update the available models display section
+    await updateAvailableModelsDisplay();
 }
 
 initPopup();
