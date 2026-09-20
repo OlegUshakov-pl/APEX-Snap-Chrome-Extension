@@ -2,7 +2,6 @@
 
 const snapBtn = document.getElementById('snapBtn');
 const folderBtn = document.getElementById('folderBtn');
-const payBtn = document.getElementById('payBtn');
 const statusDiv = document.getElementById('status');
 const aiResultDiv = document.getElementById('aiResult');
 
@@ -113,7 +112,6 @@ snapBtn.addEventListener('click', async () => {
             } else {
                 // Даже если сервер недоступен, показываем результат AI
                 statusDiv.textContent = "Слепок сгенерирован локально.";
-                payBtn.style.display = 'block';
             }
             
         } catch (error) {
@@ -127,8 +125,6 @@ snapBtn.addEventListener('click', async () => {
                 binary_data: generateBinaryHash(tab.url + Date.now()),
                 metadata_ai: { tags: [], sentiment: 0, summary: "AI недоступен", category: "other" }
             };
-            
-            payBtn.style.display = 'block';
         }
     } else {
         statusDiv.textContent = "Не удалось захватить страницу.";
