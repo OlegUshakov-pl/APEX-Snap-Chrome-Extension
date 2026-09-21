@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Binary Snap - AI Indexer",
+  "name": "ApexSnan",
   "version": "1.0",
   "description": "Creates binary snapshots of web pages with AI indexing and sends them to a server for 5 PLN.",
   "permissions": ["activeTab", "scripting", "downloads", "tabs", "storage", "clipboardWrite"],

@@ -4,21 +4,21 @@
     <style>
         body { width: 320px; padding: 15px; font-family: sans-serif; background-color: #f0f2f5; }
         h3 { margin-top: 0; color: #333; }
-        
+
         /* Buttons */
-        button { 
-            width: 100%; padding: 10px; margin-top: 8px; cursor: pointer; 
+        button {
+            width: 100%; padding: 10px; margin-top: 8px; cursor: pointer;
             background: #0078D4; color: white; border: none; border-radius: 5px;
             font-size: 13px;
         }
         button:hover { opacity: 0.9; }
-        
+
         /* Payment button */
         .pay-btn { background: #28a745; }
-        
+
         /* Status */
         .status { margin-top: 10px; font-size: 12px; text-align: center; min-height: 20px; }
-        
+
         /* Server selection with lamp indicators */
         .server-row {
             display: flex;
@@ -40,7 +40,7 @@
             color: white;
             border-color: #0078D4;
         }
-        
+
         /* Lamp indicators */
         .lamp-indicator {
             width: 12px;
@@ -52,7 +52,7 @@
         .lamp-green { background-color: #28a745; box-shadow: 0 0 5px #28a745; }
         .lamp-red { background-color: #dc3545; box-shadow: 0 0 5px #dc3545; }
         .lamp-yellow { background-color: #ffc107; box-shadow: 0 0 5px #ffc107; }
-        
+
         /* Available Models Display */
         .models-list {
             font-size: 11px;
@@ -63,7 +63,7 @@
             max-height: 200px;
             overflow: auto;
         }
-        
+
         /* Result display */
         .result { font-size: 11px; background: white; padding: 8px; border-radius: 4px; margin-top: 8px; max-height: 150px; overflow: auto; }
     </style>
@@ -72,36 +72,36 @@
     <div style="text-align: center; margin-bottom: 10px;">
         <img src="assets/apexscan-logo.svg" alt="Apex Scan" style="height: 28px; vertical-align: middle;">
     </div>
-    
+
     <!-- Server selection with lamp indicators in one row -->
     <div class="server-row">
         <span class="lamp-indicator lamp-yellow" id="ollamaLamp"></span>
         <button id="ollamaBtn" class="server-btn active">Ollama</button>
         <span class="lamp-indicator lamp-yellow" id="lmstudioLamp"></span>
         <button id="lmstudioBtn" class="server-btn">LM Studio</button>
-        <button id="refreshBtn" class="server-btn">↻ Refresh</button>
+        <button id="refreshBtn" class="server-btn">Refresh</button>
     </div>
-    
+
     <!-- Snapshot generation button -->
     <button id="snapBtn">Generate Snapshot (Free)</button>
-    
+
     <!-- Folder analysis button -->
     <button id="folderBtn" style="width:100%; padding: 8px; margin-top: 8px; cursor: pointer; background: #6c757d; color: white; border: none; border-radius: 5px; font-size: 12px;">Analyze Folder</button>
-    
+
     <!-- Payment button (disabled) -->
     <!-- <button id="payBtn" class="pay-btn" style="display:none;">Pay Blik (5 PLN)</button> -->
-    
+
     <!-- Status -->
     <div class="status" id="status">Ready...</div>
-    
+
     <!-- AI analysis result -->
     <div class="result" id="aiResult"></div>
-    
+
     <!-- Server configuration -->
     <div class="config-section">
         <label>Server URL:</label>
         <input type="text" id="serverUrl" placeholder="11434 (Ollama) / 1234 (LM Studio)" value="11434" />
-        
+
         <label id="modelLabel">Model (for Ollama):</label>
         <select id="modelSelect">
             <option value="llama3">Llama 3</option>
@@ -112,12 +112,12 @@
             <option value="phi3">Phi 3</option>
         </select>
     </div>
-    
+
     <!-- Available Models Display -->
     <div class="models-list" id="availableModels">
         <em>Scanning for models...</em>
     </div>
-    
+
     <!-- Scripts -->
     <script src="ai-service.js"></script>
     <script src="popup.js"></script>
