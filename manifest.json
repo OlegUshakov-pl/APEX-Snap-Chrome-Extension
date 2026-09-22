@@ -3,14 +3,20 @@
   "name": "ApexScan",
   "version": "1.0",
   "description": "Creates binary snapshots of web pages with AI indexing and sends them to a server for 5 PLN.",
-  "permissions": ["activeTab", "scripting", "downloads", "tabs", "storage", "clipboardWrite"],
+  "permissions": ["activeTab", "scripting", "tabs", "storage"],
   "host_permissions": ["<all_urls>"],
   "action": {
     "default_icon": {
       "16": "assets/icon16.png",
       "48": "assets/icon48.png"
-    },
-    "default_popup": "popup.html"
+    }
+  },
+  "options_ui": {
+    "page": "settings.html",
+    "open_in_tab": true
+  },
+  "chrome_url_overrides": {
+    "startpage": "search.html"
   },
   "icons": {
     "16": "assets/icon16.png",
