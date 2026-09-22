@@ -128,7 +128,7 @@ async function callLMStudio(url, text) {
 // Parses AI response and extracts JSON
 function parseAIResponse(text) {
     // Search for JSON in text
-    const jsonMatch = text.match(/\{[^]*\}/);
+    const jsonMatch = text.match(/\{[\s\S]*?\}/);
     if (jsonMatch) {
         try {
             return JSON.parse(jsonMatch[0]);

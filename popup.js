@@ -216,7 +216,7 @@ async function sendSnapToServer(data) {
         
         console.log(`Sending to ${endpoint}...`);
         
-        const response = await fetch(serverUrlInput.value + endpoint, {
+        const response = await fetch(`http://localhost:${serverUrlInput.value || '11434'}${endpoint}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
