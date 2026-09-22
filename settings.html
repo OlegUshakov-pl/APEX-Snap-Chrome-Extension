@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ApexScan - Settings</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; font-family: "Segoe UI", sans-serif; }
+        body {
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+        }
+
+        .page {
+            width: 480px;
+            padding: 24px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .header img { height: 32px; }
+        .header h1 { font-size: 18px; color: #333; font-weight: 600; }
+
+        .back-link {
+            font-size: 12px;
+            color: #0078D4;
+            text-decoration: none;
+            margin-bottom: 16px;
+        }
+        .back-link:hover { text-decoration: underline; }
+
+        fieldset {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 14px;
+            margin-bottom: 16px;
+            background: white;
+        }
+        legend {
+            font-size: 13px;
+            color: #555;
+            padding: 0 6px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: #555;
+            margin: 8px 0 4px;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .save-btn {
+            width: 100%;
+            padding: 10px;
+            background: #0078D4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .save-btn:hover { opacity: 0.9; }
+
+        .status {
+            margin-top: 10px;
+            font-size: 12px;
+            text-align: center;
+            min-height: 18px;
+            color: #555;
+        }
+
+        /* Server selection with lamp indicators */
+        .server-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 8px 0;
+        }
+        .server-btn {
+            padding: 6px 12px;
+            font-size: 11px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background: white;
+            cursor: pointer;
+            color: #333;
+        }
+        .server-btn.active {
+            background: #0078D4;
+            color: white;
+            border-color: #0078D4;
+        }
+
+        .lamp-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            border: 1px solid #999;
+        }
+        .lamp-green { background-color: #28a745; box-shadow: 0 0 5px #28a745; }
+        .lamp-red { background-color: #dc3545; box-shadow: 0 0 5px #dc3545; }
+        .lamp-yellow { background-color: #ffc107; box-shadow: 0 0 5px #ffc107; }
+
+        .models-list {
+            font-size: 11px;
+            background: #f7f7f9;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 8px;
+            max-height: 160px;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="back-link" id="backBtn" href="#">← Back to search</a>
+
+        <div class="header">
+            <img src="assets/logo.png" alt="Apex Scan">
+            <h1>Settings</h1>
+        </div>
+
+        <fieldset>
+            <legend>Search Server (FastAPI)</legend>
+            <label>Server URL:</label>
+            <input type="text" id="serverUrl" placeholder="e.g. 127.0.0.1:8000" value="127.0.0.1:8000">
+        </fieldset>
+
+        <fieldset>
+            <legend>AI Server (for page analysis)</legend>
+
+            <div class="server-row">
+                <span class="lamp-indicator lamp-yellow" id="ollamaLamp"></span>
+                <button id="ollamaBtn" class="server-btn active">Ollama</button>
+                <span class="lamp-indicator lamp-yellow" id="lmstudioLamp"></span>
+                <button id="lmstudioBtn" class="server-btn">LM Studio</button>
+                <button id="refreshBtn" class="server-btn">Refresh</button>
+            </div>
+
+            <label>Port:</label>
+            <input type="text" id="serverPort" placeholder="11434 (Ollama) / 1234 (LM Studio)" value="11434">
+
+            <label id="modelLabel">Model (for Ollama):</label>
+            <select id="modelSelect">
+                <option value="llama3">Llama 3</option>
+                <option value="llama2">Llama 2</option>
+                <option value="llama2-8b">Llama 2 (8B)</option>
+                <option value="mistral">Mistral</option>
+                <option value="gemma2">Gemma 2</option>
+                <option value="phi3">Phi 3</option>
+            </select>
+
+            <div class="models-list" id="availableModels">
+                <em>Scanning for models...</em>
+            </div>
+        </fieldset>
+
+        <button id="saveBtn" class="save-btn">Save Settings</button>
+        <div class="status" id="saveStatus"></div>
+    </div>
+
+    <script src="ai-service.js"></script>
+    <script src="settings.js"></script>
+</body>
+</html>
