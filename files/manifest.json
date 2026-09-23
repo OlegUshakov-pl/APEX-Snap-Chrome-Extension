@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Моя внутренняя страница",
+  "version": "1.0",
+  "description": "Открывает внутреннюю страницу полноэкранной вкладкой по клику на иконку",
+  "action": {
+    "default_title": "Открыть страницу"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["tabs"]
+}
