@@ -427,4 +427,12 @@ async function initPopup() {
     await updateAvailableModelsDisplay();
 }
 
+// Icon click opens the search page
+const logo = document.querySelector('img[alt="Apex Scan"]');
+if (logo) {
+    logo.addEventListener('click', () => {
+        chrome.tabs.create({ url: chrome.runtime.getURL('search.html') });
+    });
+}
+
 initPopup();
