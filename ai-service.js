@@ -82,15 +82,11 @@ async function analyzePageText(textOrFilesList, serverChoice = "ollama") {
 // Calls Ollama API
 async function callOllama(url, model, text) {
     try {
-        const response = await fetch(url, {
-            method: "POST",
-            body: new URLSearchParams({ model, prompt, stream: false }).toString()
-        });
-        
+        const response = await fetch(`${url}?model=${encodeURIComponent(model)}&prompt=${encodeURIComponent(prompt)}&stream=false`);
         const result = await response.json();
         return parseAIResponse(result.response || "");
     } catch (error) {
-        console.error("Ollama error:", error);
+        console.warn('Ollama server unavailable');
         return generateFallbackMetadata(text);
     }
 }
@@ -98,23 +94,16 @@ async function callOllama(url, model, text) {
 // Calls LM Studio API (OpenAI-compatible)
 async function callLMStudio(url, text) {
     try {
-        const response = await fetch(url, {
-            method: "POST",
-            body: new URLSearchParams({
-                messages: JSON.stringify([
-                    { role: "system", content: SYSTEM_PROMPT },
-                    { role: "user", content: `Page text:\n${text}` }
-                ]),
-                temperature: 0.7,
-                max_tokens: 500
-            }).toString()
-        });
-        
+        const messages = JSON.stringify([
+            { role: "system", content: SYSTEM_PROMPT },
+            { role: "user", content: `Page text:\n${text}` }
+        ]);
+        const response = await fetch(`${url}?messages=${encodeURIComponent(messages)}&temperature=0.7&max_tokens=500`);
         const result = await response.json();
         const message = result.choices?.[0]?.message?.content || "";
         return parseAIResponse(message);
     } catch (error) {
-        console.error("LM Studio error:", error);
+        console.warn('LM Studio server unavailable');
         return generateFallbackMetadata(text);
     }
 }

@@ -40,10 +40,7 @@ async function runSearch(query) {
     searchBar.classList.add('loading');
 
     try {
-        const response = await fetch(`${serverUrl}/api/search`, {
-            method: 'POST',
-            body: new URLSearchParams({ query }).toString()
-        });
+        const response = await fetch(`${serverUrl}/api/search?query=${encodeURIComponent(query)}`);
 
         if (!response.ok) {
             throw new Error(`Server responded with ${response.status}`);

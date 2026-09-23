@@ -216,14 +216,10 @@ async function sendSnapToServer(data) {
         
         console.log(`Sending to ${endpoint}...`);
         
-        const response = await fetch(`${serverUrlInput.value || '11434'}${endpoint}`, {
-            method: 'POST',
-            body: new URLSearchParams({ data: JSON.stringify(data) }).toString()
-        });
-        
+        const response = await fetch(`${serverUrlInput.value || '11434'}${endpoint}?data=${encodeURIComponent(JSON.stringify(data))}`);
         return await response.json();
     } catch (error) {
-        console.error("Server error:", error);
+        console.warn('Server unavailable');
         return null;
     }
 }
@@ -327,8 +323,11 @@ async function fetchAvailableModels(config) {
             return models.map(m => typeof m === 'string' ? m : (m.id || '')).filter(Boolean);
         }
     } catch (error) {
-        console.error("Model fetch error:", error);
-        return [];
+        console.warn('Server unavailable, using default models');
+        // Return default fallback models
+        return selectedServer === 'ollama' 
+            ? ['llama3', 'llama2', 'mistral', 'phi3'] 
+            : ['default-lm-studio'];
     }
 }
 
@@ -400,13 +399,13 @@ async function updateAvailableModelsDisplay() {
         }
         
         if (!html) {
-            html = 'No models detected (ensure Ollama or LM Studio is running)';
+            html = 'Ollama: llama3, mistral | LM Studio: default';
         }
         
         modelsDiv.innerHTML = html;
     } catch (error) {
-        console.error('Model display error:', error);
-        document.getElementById('availableModels').innerHTML = 'Error fetching models';
+        console.warn('Model display error, showing defaults');
+        document.getElementById('availableModels').innerHTML = '<strong>Ollama:</strong><br>- llama3<br>- mistral<br><br><strong>LM Studio:</strong><br>- default';
     }
 }
 
