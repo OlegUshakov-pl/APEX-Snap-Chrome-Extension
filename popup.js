@@ -427,11 +427,8 @@ async function initPopup() {
 }
 
 // Icon click opens the search page
-const logo = document.querySelector('img[alt="Apex Scan"]');
-if (logo) {
-    logo.addEventListener('click', () => {
-        window.location.href = chrome.runtime.getURL('search.html');
-    });
-}
+chrome.action.onClicked.addListener(() => {
+    chrome.tabs.create({ url: chrome.runtime.getURL('search.html') });
+});
 
 initPopup();
