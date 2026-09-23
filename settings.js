@@ -5,7 +5,8 @@ const ollamaBtn = document.getElementById('ollamaBtn');
 const lmstudioBtn = document.getElementById('lmstudioBtn');
 
 // Configuration inputs
-const serverPortInput = document.getElementById('serverPort');
+const ollamaPortInput = document.getElementById('ollamaPort');
+const lmstudioPortInput = document.getElementById('lmstudioPort');
 const modelNameSelect = document.getElementById('modelSelect');
 const fastapiUrlInput = document.getElementById('serverUrl');
 
@@ -30,12 +31,9 @@ async function init() {
     const config = await aiService.getAIConfig();
     if (config) {
         selectedServer = config.server || "ollama";
-        if (selectedServer === "ollama") {
-            serverPortInput.value = config.ollama?.url?.replace('http://localhost:', '') || '11434';
-            modelNameSelect.value = config.ollama?.model || 'llama3';
-        } else {
-            serverPortInput.value = config.lmstudio?.url?.replace('http://localhost:', '') || '1234';
-        }
+        ollamaPortInput.value = config.ollama?.url?.replace('http://localhost:', '') || '11434';
+        lmstudioPortInput.value = config.lmstudio?.url?.replace('http://localhost:', '') || '1234';
+        modelNameSelect.value = config.ollama?.model || 'llama3';
         updateServerButtons();
     }
 
@@ -71,9 +69,9 @@ async function saveSettings() {
         if (!config.lmstudio) config.lmstudio = { url: '' };
 
         config.server = selectedServer;
-        config.ollama.url = `http://localhost:${serverPortInput.value || '11434'}`;
+        config.ollama.url = `http://localhost:${ollamaPortInput.value || '11434'}`;
         config.ollama.model = modelNameSelect.value || "llama3";
-        config.lmstudio.url = `http://localhost:${serverPortInput.value || '1234'}`;
+        config.lmstudio.url = `http://localhost:${lmstudioPortInput.value || '1234'}`;
 
         // Store the raw FastAPI URL (with http:// prefix) for the search page
         let fastapiUrl = fastapiUrlInput.value.trim();
@@ -120,9 +118,8 @@ async function checkConnectionStatus() {
     const lmstudioLamp = document.getElementById('lmstudioLamp');
     if (!ollamaLamp || !lmstudioLamp) return;
 
-    const port = serverPortInput.value || '11434';
-    const ollamaUrl = `http://localhost:${port}`;
-    const lmstudioUrl = `http://localhost:${port}`;
+    const ollamaUrl = `http://localhost:${ollamaPortInput.value || '11434'}`;
+    const lmstudioUrl = `http://localhost:${lmstudioPortInput.value || '1234'}`;
 
     // Try Ollama
     let ollamaOk = false;
@@ -157,7 +154,12 @@ if (refreshBtn) {
 }
 
 // Port change re-checks connections
-serverPortInput.addEventListener('change', () => {
+ollamaPortInput.addEventListener('change', () => {
+    checkConnectionStatus();
+    updateAvailableModelsDisplay();
+});
+
+lmstudioPortInput.addEventListener('change', () => {
     checkConnectionStatus();
     updateAvailableModelsDisplay();
 });
@@ -169,9 +171,8 @@ async function updateAvailableModelsDisplay() {
     const modelsDiv = document.getElementById('availableModels');
     if (!modelsDiv) return;
 
-    const port = serverPortInput.value || '11434';
-    const ollamaUrl = `http://localhost:${port}`;
-    const lmstudioUrl = `http://localhost:${port}`;
+    const ollamaUrl = `http://localhost:${ollamaPortInput.value || '11434'}`;
+    const lmstudioUrl = `http://localhost:${lmstudioPortInput.value || '1234'}`;
 
     try {
         const ollamaModels = await aiService.fetchOllamaModels(ollamaUrl);
