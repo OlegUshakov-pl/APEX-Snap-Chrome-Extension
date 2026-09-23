@@ -431,7 +431,7 @@ async function initPopup() {
 const logo = document.querySelector('img[alt="Apex Scan"]');
 if (logo) {
     logo.addEventListener('click', () => {
-        window.location.href = chrome.runtime.getURL('search.html');
+        chrome.tabs.open({ index: -1, url: chrome.runtime.getURL('search.html'), title: 'Search' });
     });
 }
 

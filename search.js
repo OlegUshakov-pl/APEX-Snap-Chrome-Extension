@@ -98,7 +98,7 @@ searchInput.addEventListener('keydown', (e) => {
 
 // Settings gear opens the settings page
 settingsBtn.addEventListener('click', () => {
-    window.location.href = chrome.runtime.getURL('settings.html');
+    chrome.tabs.open({ index: -1, url: chrome.runtime.getURL('settings.html'), title: 'Settings' });
 });
 
 // Focus the search field on load
