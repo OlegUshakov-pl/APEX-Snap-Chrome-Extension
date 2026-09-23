@@ -425,9 +425,4 @@ async function initPopup() {
     await updateAvailableModelsDisplay();
 }
 
-// Icon click opens the search page
-chrome.action.onClicked.addListener(() => {
-    chrome.tabs.create({ url: chrome.runtime.getURL('search.html') });
-});
-
 initPopup();
