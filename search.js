@@ -42,8 +42,7 @@ async function runSearch(query) {
     try {
         const response = await fetch(`${serverUrl}/api/search`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query })
+            body: new URLSearchParams({ query }).toString()
         });
 
         if (!response.ok) {

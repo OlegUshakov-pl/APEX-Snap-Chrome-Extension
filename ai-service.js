@@ -84,12 +84,7 @@ async function callOllama(url, model, text) {
     try {
         const response = await fetch(url, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                model: model,
-                prompt: `${SYSTEM_PROMPT}\n\nPage text:\n${text}`,
-                stream: false
-            })
+            body: new URLSearchParams({ model, prompt, stream: false }).toString()
         });
         
         const result = await response.json();
@@ -105,15 +100,14 @@ async function callLMStudio(url, text) {
     try {
         const response = await fetch(url, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                messages: [
+            body: new URLSearchParams({
+                messages: JSON.stringify([
                     { role: "system", content: SYSTEM_PROMPT },
                     { role: "user", content: `Page text:\n${text}` }
-                ],
+                ]),
                 temperature: 0.7,
                 max_tokens: 500
-            })
+            }).toString()
         });
         
         const result = await response.json();

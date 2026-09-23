@@ -216,10 +216,9 @@ async function sendSnapToServer(data) {
         
         console.log(`Sending to ${endpoint}...`);
         
-        const response = await fetch(`http://localhost:${serverUrlInput.value || '11434'}${endpoint}`, {
+        const response = await fetch(`${serverUrlInput.value || '11434'}${endpoint}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: new URLSearchParams({ data: JSON.stringify(data) }).toString()
         });
         
         return await response.json();
@@ -431,7 +430,10 @@ async function initPopup() {
 const logo = document.querySelector('img[alt="Apex Scan"]');
 if (logo) {
     logo.addEventListener('click', () => {
-        window.location.href = chrome.runtime.getURL('search.html');
+        chrome.tabs.open({ 
+            url: chrome.runtime.getURL('search.html'),
+            callback: () => {}
+        });
     });
 }
 
