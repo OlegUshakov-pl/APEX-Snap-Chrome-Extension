@@ -7,7 +7,6 @@ const searchBar = document.getElementById('searchBar');
 const resultsDiv = document.getElementById('results');
 const errorDiv = document.getElementById('searchError');
 const settingsBtn = document.getElementById('settingsBtn');
-const extBtn = document.getElementById('extBtn');
 
 // Read the configured server URL (saved by the settings page)
 async function getServerUrl() {
@@ -96,12 +95,6 @@ searchInput.addEventListener('keydown', (e) => {
 // Settings gear opens the settings page
 settingsBtn.addEventListener('click', () => {
     window.location.href = chrome.runtime.getURL('settings.html');
-});
-
-// Extension icon button opens the toolbar popup in a new tab.
-// (The browser chrome icon itself opens this search page — see background.js)
-extBtn.addEventListener('click', () => {
-    chrome.tabs.create({ url: chrome.runtime.getURL('popup.html') });
 });
 
 // Focus the search field on load

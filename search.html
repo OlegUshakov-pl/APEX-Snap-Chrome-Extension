@@ -46,31 +46,6 @@
             color: #333;
         }
 
-        /* Extension icon button (opens the toolbar popup) */
-        #extBtn {
-            position: fixed;
-            top: 16px;
-            right: 64px;
-            width: 36px;
-            height: 36px;
-            border: none;
-            background: transparent;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-        }
-
-        #extBtn:hover {
-            background: rgba(255, 255, 255, 0.6);
-        }
-
-        #extBtn img {
-            height: 24px;
-        }
-
         /* Centered search bar */
         .search-wrapper {
             flex: 1;
@@ -175,11 +150,6 @@
     </style>
 </head>
 <body>
-    <!-- Extension icon (opens the toolbar popup) -->
-    <button id="extBtn" title="ApexScan toolbar" aria-label="ApexScan toolbar">
-        <img src="assets/logo.png" alt="ApexScan">
-    </button>
-
     <!-- Settings gear (opens settings page) -->
     <button id="settingsBtn" title="Settings" aria-label="Settings">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
