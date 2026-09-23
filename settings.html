@@ -7,7 +7,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: 100%; font-family: "Segoe UI", sans-serif; }
         body {
-            background: #f0f2f5;
+            background: linear-gradient(180deg, #d8d8ec 0%, #e6dcdd 60%, #f2dcd7 100%);
             display: flex;
             justify-content: center;
         }
@@ -24,11 +24,11 @@
             margin-bottom: 20px;
         }
         .header img { height: 32px; }
-        .header h1 { font-size: 18px; color: #333; font-weight: 600; }
+        .header h1 { font-size: 18px; color: #444; font-weight: 600; }
 
         .back-link {
             font-size: 12px;
-            color: #0078D4;
+            color: #0066bb;
             text-decoration: none;
             margin-bottom: 16px;
         }
@@ -43,14 +43,14 @@
         }
         legend {
             font-size: 13px;
-            color: #555;
+            color: #444;
             padding: 0 6px;
         }
 
         label {
             display: block;
             font-size: 12px;
-            color: #555;
+            color: #444;
             margin: 8px 0 4px;
         }
         input[type="text"], select {
@@ -78,7 +78,7 @@
             font-size: 12px;
             text-align: center;
             min-height: 18px;
-            color: #555;
+            color: #444;
         }
 
         /* Server selection with lamp indicators */
@@ -116,12 +116,13 @@
 
         .models-list {
             font-size: 11px;
-            background: #f7f7f9;
+            background: rgba(255, 255, 255, 0.5);
             padding: 8px;
             border-radius: 4px;
             margin-top: 8px;
             max-height: 160px;
             overflow: auto;
+            color: #444;
         }
     </style>
 </head>
@@ -159,12 +160,7 @@
 
             <label id="modelLabel">Model (for Ollama):</label>
             <select id="modelSelect">
-                <option value="llama3">Llama 3</option>
-                <option value="llama2">Llama 2</option>
-                <option value="llama2-8b">Llama 2 (8B)</option>
-                <option value="mistral">Mistral</option>
-                <option value="gemma2">Gemma 2</option>
-                <option value="phi3">Phi 3</option>
+                <option value="">Loading installed models...</option>
             </select>
 
             <div class="models-list" id="availableModels">

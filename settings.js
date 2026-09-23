@@ -16,6 +16,7 @@ const saveStatus = document.getElementById('saveStatus');
 const backBtn = document.getElementById('backBtn');
 
 let selectedServer = "ollama"; // ollama | lmstudio
+let lmstudioSelectedModel = ""; // last loaded model in LM Studio (set from the model list)
 
 // ---------- Initialization ----------
 
@@ -37,9 +38,10 @@ async function init() {
         updateServerButtons();
     }
 
-    // 3. Connection status + model lists
+    // 3. Connection status + model lists + model dropdown
     await checkConnectionStatus();
-    updateAvailableModelsDisplay();
+    await updateAvailableModelsDisplay();
+    refreshModelSelect();
 
     // Back link returns to the search page
     backBtn.href = chrome.runtime.getURL('search.html');
@@ -55,7 +57,41 @@ function updateServerButtons() {
     if (modelLabel) {
         modelLabel.textContent = selectedServer === 'ollama'
             ? 'Model (for Ollama):'
-            : 'Model (for LM Studio) - loaded model is used';
+            : 'Model (for LM Studio):';
+    }
+
+    // Refresh the model dropdown to show only installed models for the active server
+    refreshModelSelect();
+}
+
+// Refills the model dropdown with only the installed models of the selected server
+function refreshModelSelect() {
+    const modelsDiv = document.getElementById('availableModels');
+    if (!modelsDiv) return;
+
+    const prevValue = modelNameSelect.value;
+
+    // Keep only the options that belong to the currently selected server
+    const options = Array.from(modelNameSelect.options);
+    options.forEach(opt => {
+        if (!opt.value) return; // keep the placeholder
+        if (opt.dataset.server && opt.dataset.server !== selectedServer) {
+            modelNameSelect.remove(modelNameSelect.options.indexOf(opt));
+        }
+    });
+
+    // Ensure the previous selection is still valid for the new server
+    const hasPrev = Array.from(modelNameSelect.options).some(o => o.value === prevValue);
+    if (!hasPrev) {
+        modelNameSelect.value = '';
+    }
+
+    if (modelNameSelect.value === '') {
+        const first = Array.from(modelNameSelect.options).find(o => o.value);
+        if (first) {
+            modelNameSelect.value = first.value;
+            if (selectedServer === 'lmstudio') lmstudioSelectedModel = first.value;
+        }
     }
 }
 
@@ -72,6 +108,8 @@ async function saveSettings() {
         config.ollama.url = `http://localhost:${ollamaPortInput.value || '11434'}`;
         config.ollama.model = modelNameSelect.value || "llama3";
         config.lmstudio.url = `http://localhost:${lmstudioPortInput.value || '1234'}`;
+        // Save the model actually chosen for the active server
+        config.lmstudio.model = (selectedServer === 'lmstudio' && modelNameSelect.value) || lmstudioSelectedModel || '';
 
         // Store the raw FastAPI URL (with http:// prefix) for the search page
         let fastapiUrl = fastapiUrlInput.value.trim();
@@ -149,19 +187,20 @@ if (refreshBtn) {
         if (lmstudioLamp) lmstudioLamp.className = 'lamp-indicator lamp-yellow';
 
         await checkConnectionStatus();
-        updateAvailableModelsDisplay();
+        await updateAvailableModelsDisplay();
+        refreshModelSelect();
     });
 }
 
-// Port change re-checks connections
+// Port change re-checks connections and refreshes models
 ollamaPortInput.addEventListener('change', () => {
     checkConnectionStatus();
-    updateAvailableModelsDisplay();
+    updateAvailableModelsDisplay().then(refreshModelSelect);
 });
 
 lmstudioPortInput.addEventListener('change', () => {
     checkConnectionStatus();
-    updateAvailableModelsDisplay();
+    updateAvailableModelsDisplay().then(refreshModelSelect);
 });
 
 // ---------- Available models display ----------
