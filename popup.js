@@ -11,7 +11,7 @@ const lmstudioBtn = document.getElementById('lmstudioBtn');
 
 // Configuration inputs
 const serverUrlInput = document.getElementById('serverUrl');
-const modelNameInput = document.getElementById('modelName');
+const modelNameInput = document.getElementById('modelSelect');
 
 let currentSnapData = null;
 let selectedServer = "ollama"; // default: ollama or lmstudio
