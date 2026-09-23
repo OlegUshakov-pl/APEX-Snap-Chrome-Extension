@@ -141,12 +141,14 @@ ollamaBtn.addEventListener('click', () => {
     selectedServer = "ollama";
     updateServerButtons();
     checkConnectionStatus();
+    refreshModelSelectAndPopulate();
 });
 
 lmstudioBtn.addEventListener('click', () => {
     selectedServer = "lmstudio";
     updateServerButtons();
     checkConnectionStatus();
+    refreshModelSelectAndPopulate();
 });
 
 // ---------- Connection check (lamp indicators) ----------
@@ -236,6 +238,37 @@ async function updateAvailableModelsDisplay() {
         console.error('Model display error:', error);
         modelsDiv.innerHTML = 'Error fetching models';
     }
+}
+
+// Refresh model dropdown and repopulate from current server
+async function refreshModelSelectAndPopulate() {
+    const config = await aiService.getAIConfig();
+    const ollamaUrl = `http://localhost:${ollamaPortInput.value || '11434'}`;
+    const lmstudioUrl = `http://localhost:${lmstudioPortInput.value || '1234'}`;
+
+    let models = [];
+    if (selectedServer === 'ollama') {
+        models = await aiService.fetchOllamaModels(ollamaUrl);
+    } else {
+        models = await aiService.fetchLMStudioModels(lmstudioUrl);
+    }
+
+    // Clear existing options except the first default one
+    const modelSelect = document.getElementById('modelSelect');
+    if (modelSelect) {
+        while (modelSelect.options.length > 1) {
+            modelSelect.remove(1);
+        }
+        for (const model of models) {
+            const option = document.createElement('option');
+            option.value = model;
+            option.dataset.server = selectedServer;
+            option.textContent = model;
+            modelSelect.appendChild(option);
+        }
+    }
+
+    updateAvailableModelsDisplay();
 }
 
 // ---------- Start ----------

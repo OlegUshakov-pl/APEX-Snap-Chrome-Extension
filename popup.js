@@ -47,18 +47,20 @@ ollamaBtn.addEventListener('click', () => {
     selectedServer = "ollama";
     updateServerButtons();
     saveCurrentConfig();
-    // Refresh model display on server switch
+    // Refresh model display and dropdown on server switch
     updateAvailableModelsDisplay();
     checkConnectionStatus();
+    refreshModelSelectForServer();
 });
 
 lmstudioBtn.addEventListener('click', () => {
     selectedServer = "lmstudio";
     updateServerButtons();
     saveCurrentConfig();
-    // Refresh model display on server switch
+    // Refresh model display and dropdown on server switch
     updateAvailableModelsDisplay();
     checkConnectionStatus();
+    refreshModelSelectForServer();
 });
 
 // Refresh models when server URL changes
@@ -341,10 +343,11 @@ async function updateModelSelect(models) {
         modelSelect.remove(1);
     }
     
-    // Add fetched models
+    // Add fetched models with server type tag
     for (const model of models) {
         const option = document.createElement('option');
         option.value = model;
+        option.dataset.server = selectedServer;
         option.textContent = model;
         modelSelect.appendChild(option);
     }
@@ -407,6 +410,13 @@ async function updateAvailableModelsDisplay() {
         console.warn('Model display error, showing defaults');
         document.getElementById('availableModels').innerHTML = '<strong>Ollama:</strong><br>- llama3<br>- mistral<br><br><strong>LM Studio:</strong><br>- default';
     }
+}
+
+// Refresh model dropdown for current server
+async function refreshModelSelectForServer() {
+    const config = await aiService.getAIConfig();
+    const models = await fetchAvailableModels(config);
+    await updateModelSelect(models);
 }
 
 // Initialize on popup load
