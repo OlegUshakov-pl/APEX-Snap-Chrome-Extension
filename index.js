@@ -8,11 +8,6 @@ const resultsDiv = document.getElementById('results');
 const errorDiv = document.getElementById('searchError');
 const settingsBtn = document.getElementById('settingsBtn');
 
-// Menu elements
-const menuBtn = document.getElementById('menuBtn');
-const menuContainer = document.getElementById('menuContainer');
-const menuItems = document.querySelectorAll('.menu-item');
-
 // Read the configured server URL (saved by the settings page)
 async function getServerUrl() {
     try {
@@ -98,7 +93,6 @@ searchInput.addEventListener('keydown', (e) => {
 });
 
 // Settings gear opens the settings page
-const settingsBtn = document.getElementById('settingsBtn');
 if (settingsBtn) {
     settingsBtn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -106,9 +100,7 @@ if (settingsBtn) {
     });
 }
 
-/**
- * Menu logic: toggling visibility and handling item clicks
- */
+// Menu logic
 const menuBtn = document.getElementById('menuBtn');
 if (menuBtn) {
     // Close menu on outside click
@@ -139,8 +131,7 @@ if (menuBtn) {
 }
 
 // Handle menu items selection
-const allMenuItems = document.querySelectorAll('.menu-item');
-allMenuItems.forEach(item => {
+document.querySelectorAll('.menu-item').forEach(item => {
     item.addEventListener('click', () => {
         const targetFile = item.getAttribute('data-target');
         if (targetFile) {
