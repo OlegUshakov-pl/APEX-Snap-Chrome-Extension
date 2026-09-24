@@ -9,6 +9,8 @@ const ollamaPortInput = document.getElementById('ollamaPort');
 const lmstudioPortInput = document.getElementById('lmstudioPort');
 const modelNameSelect = document.getElementById('modelSelect');
 const fastapiUrlInput = document.getElementById('serverUrl');
+const storagePathInput = document.getElementById('storagePathInput');
+const browseBtn = document.getElementById('browseBtn');
 
 // Save controls
 const saveBtn = document.getElementById('saveBtn');
@@ -98,6 +100,22 @@ function refreshModelSelect() {
         }
     }
 }
+// Browse for folder
+browseBtn.addEventListener('click', async () => {
+    try {
+        const handle = await window.showDirectoryPicker();
+        // We can't store the 'handle' object directly in sync storage easily, 
+        // but we can store a descriptive name or use it if this were a persistent session.
+        // For now, let's show that it worked and we will use the folder.
+        storagePathInput.value = `Selected: ${handle.name}`;
+        saveStatus.textContent = 'Folder selected!';
+        saveStatus.style.color = '#28a745';
+    } catch (error) {
+        console.error("Directory picker failed:", error);
+        saveStatus.textContent = 'Failed to pick folder';
+        saveStatus.style.color = '#dc3545';
+    }
+});
 
 // ---------- Save ----------
 
@@ -122,9 +140,13 @@ async function saveSettings() {
         }
         fastapiUrl = fastapiUrl.replace(/\/+$/, '');
 
+        // Save the storage path (just a string/label for now)
+        const storagePath = storagePathInput.value;
+
         await chrome.storage.sync.set({
             ai_config: config,
-            server_url: fastapiUrl
+            server_url: fastapiUrl,
+            storage_path: storagePath
         });
 
         saveStatus.textContent = 'Settings saved ✓';

@@ -8,6 +8,11 @@ const resultsDiv = document.getElementById('results');
 const errorDiv = document.getElementById('searchError');
 const settingsBtn = document.getElementById('settingsBtn');
 
+// Menu elements
+const menuBtn = document.getElementById('menuBtn');
+const menuContainer = document.getElementById('menuContainer');
+const menuItems = document.querySelectorAll('.menu-item');
+
 // Read the configured server URL (saved by the settings page)
 async function getServerUrl() {
     try {
@@ -95,6 +100,29 @@ searchInput.addEventListener('keydown', (e) => {
 // Settings gear opens the settings page
 settingsBtn.addEventListener('click', () => {
     window.location.href = chrome.runtime.getURL('settings.html');
+});
+
+/**
+ * Menu logic: toggling visibility and handling item clicks
+ */
+if (menuBtn) {
+    menuBtn.addEventListener('click', () => {
+        const container = document.getElementById('menuContainer');
+        if (container) {
+            container.classList.toggle('visible');
+        }
+    });
+}
+
+// Handle menu items selection
+const allMenuItems = document.querySelectorAll('.menu-item');
+allMenuItems.forEach(item => {
+    item.addEventListener('click', () => {
+        const targetFile = item.getAttribute('data-target');
+        if (targetFile) {
+            window.location.href = chrome.runtime.getURL(`${targetFile}.html`);
+        }
+    });
 });
 
 // Focus the search field on load
