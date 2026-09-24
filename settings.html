@@ -45,7 +45,7 @@
             display: block;
             font-size: 14px;
             color: #444;
-            margin: 12px 0 6px;
+            margin: 12px  more 6px;
         }
         input[type="text"], select {
             width: 100%;
@@ -130,32 +130,29 @@
 <body>
     <div class="page">
         <a class="back-link" id="backBtn" href="#">← Back to search</a>
->
         <h1>Settings</h1>
 
         <div class="config-section">
             <div class="section-title">Search Server (FastAPI)</div>
->
             <label>Server URL:</label>
             <input type="text" id="serverUrl" placeholder="e.g. 127.0.0.1:8000" value="127.0.0.1:8000">
         </div>
 
-    <div class="config-section">
+        <div class="config-section">
             <div class="section-title">AI Server (for page analysis)</div>
->
 
             <!-- 5. Layout: Ollama -> LM Studio -> Refresh -->
             <div style="margin-bottom: 25px;">
                 <div class="server-row">
                     <span class="lamp-indicator lamp-yellow" id="ollamaLamp"></span>
-                    <button id="ollamaBtn" class="server-btn active">Ollama</button
+                    <button id="ollamaBtn" class="server-btn active">Ollama</button>
                 </div>
             </div>
 
             <div style="margin-bottom: 25px;">
                 <div class="server-row">
                     <span class="lamp-indicator lamp-yellow" id="lmstudioLamp"></span>
-                    <button id="lmstudioBtn" class="server-btn">LM Studio</button
+                    <button id="lmstudioBtn" class="server-btn">LM Studio</button>
                 </div>
             </div>
 
