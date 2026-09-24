@@ -80,31 +80,38 @@ async function analyzePageText(textOrFilesList, serverChoice = "ollama") {
 }
 
 // Calls Ollama API
-async function callOllama(url, model, text) {
+async function callOllama(url, model, promptText) {
     try {
-        const response = await fetch(`${url}?model=${encodeURIComponent(model)}&prompt=${encodeURIComponent(prompt)}&stream=false`);
+        const response = await fetch(`${url}?model=${encodeURIComponent(model)}&prompt=${encodeURIComponent(promptText)}&stream=false`);
         const result = await response.json();
         return parseAIResponse(result.response || "");
     } catch (error) {
         console.warn('Ollama server unavailable');
-        return generateFallbackMetadata(text);
+        return generateFallbackMetadata(promptText);
     }
 }
 
 // Calls LM Studio API (OpenAI-compatible)
-async function callLMStudio(url, text) {
+async function callLMStudio(url, promptText) {
     try {
-        const messages = JSON.stringify([
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: `Page text:\n${text}` }
-        ]);
-        const response = await fetch(`${url}?messages=${encodeURIComponent(messages)}&temperature=0.7&max_tokens=500`);
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                messages: [
+                    { role: "system", content: SYSTEM_PROMPT },
+                    { role: "user", content: promptText }
+                ],
+                temperature: 0.7,
+                max_tokens: 500
+            })
+        });
         const result = await response.json();
         const message = result.choices?.[0]?.message?.content || "";
         return parseAIResponse(message);
     } catch (error) {
         console.warn('LM Studio server unavailable');
-        return generateFallbackMetadata(text);
+        return generateFallbackMetadata(promptText);
     }
 }
 
@@ -117,6 +124,7 @@ function parseAIResponse(text) {
             return JSON.parse(jsonMatch[0]);
         } catch (e) {
             console.error("JSON parse error:", e);
+            // If parsing fails, we try to return the text as a summary in fallback
             return generateFallbackMetadata(text);
         }
     }
