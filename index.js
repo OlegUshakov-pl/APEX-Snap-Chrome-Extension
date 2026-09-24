@@ -109,6 +109,7 @@ if (menuBtn) {
         if (!container || !container.classList.contains('visible')) return;
         if (!menuBtn.contains(e.target) && !container.contains(e.target)) {
             container.classList.remove('visible');
+            container.classList.add('hidden');
         }
     });
 
@@ -118,6 +119,11 @@ if (menuBtn) {
         const container = document.getElementById('menuContainer');
         if (container) {
             container.classList.toggle('visible');
+            if (!container.classList.contains('visible')) {
+                container.classList.add('hidden');
+            } else {
+                container.classList.remove('hidden');
+            }
             container.focus();
         }
     });
