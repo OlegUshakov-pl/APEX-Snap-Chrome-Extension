@@ -124,26 +124,10 @@ async function checkServerInstallation(server) {
 async function handleDirectorySelection() {
     try {
         const dirHandle = await window.showDirectoryPicker();
-        // Try to get the path string (works in Chrome)
-        let pathStr = '';
-        if ('handle' in dirHandle) {
-            // Check if we can resolve to a path string
-            try {
-                pathStr = dirHandle.kind === 'directory' 
-                    ? dirHandle.remoteInstance?.path?.toString() || dirHandle.name
-                    : dirHandle.remoteInstance?.path?.toString();
-            } catch(e) {
-                pathStr = dirHandle.name;
-            }
-        }
-        
-        storagePathInput.value = pathStr || dirHandle.name;
-        saveStatus.textContent = "Folder selected";
-        saveStatus.style.color = "#28a745";
+        storagePathInput.value = dirHandle.name;
     } catch (e) {
         console.warn("Directory picker cancelled or not supported", e);
         if (e.name !== 'AbortError') {
-            // User cancelled or API not supported
             saveStatus.textContent = "Please select a folder";
             saveStatus.style.color = "#ffc107";
         }
@@ -216,6 +200,12 @@ saveBtn.addEventListener('click', async () => {
         };
 
         await chrome.storage.sync.set(config);
+        
+        // Update the path display
+        if (config.storage_path) {
+            storagePathLabel.textContent = 'Path: ' + config.storage_path;
+        }
+        
         saveStatus.textContent = "Settings saved successfully!";
         saveStatus.style.color = "#28a745";
     } catch (e) {
