@@ -113,7 +113,8 @@ if (menuBtn) {
     });
 
     // Toggle menu on button press (supports both click and keyboard)
-    menuBtn.addEventListener('click', () => {
+    menuBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent closing immediately
         const container = document.getElementById('menuContainer');
         if (container) {
             container.classList.toggle('visible');
