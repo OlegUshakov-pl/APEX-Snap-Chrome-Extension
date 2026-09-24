@@ -194,6 +194,60 @@
             font-size: 13px;
             text-align: center;
         }
+
+        /* Settings gear - top-right corner, no background */
+        .settings-btn {
+            position: fixed;
+            top: 16px;
+            right: 24px;
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .settings-btn:hover {
+            transform: rotate(90deg);
+        }
+
+        .settings-btn svg {
+            width: 24px;
+            height: 24px;
+            color: #666;
+        }
+
+        /* Settings gear - no background, top-right corner */
+        #settingsBtn {
+            position: fixed;
+            top: 16px;
+            right: 24px;
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        #settingsBtn:hover {
+            transform: rotate(90deg);
+        }
+
+        #settingsBtn svg {
+            width: 24px;
+            height: 24px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -207,13 +261,17 @@
     </div>
 
     <!-- Settings gear (opens settings page) -->
-    <button id="settingsBtn" title="Settings" aria-label="Settings">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    <a href="chrome-extension://{{chrome.runtime.id}}/settings.html"
+         id="settingsBtn"
+         title="Settings"
+         aria-label="Settings"
+         class="settings-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"></circle>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
         </svg>
-    </button>
+    </a>
 
     <!-- Search bar -->
     <div class="search-wrapper">

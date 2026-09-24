@@ -98,18 +98,42 @@ searchInput.addEventListener('keydown', (e) => {
 });
 
 // Settings gear opens the settings page
-settingsBtn.addEventListener('click', () => {
-    window.location.href = chrome.runtime.getURL('settings.html');
-});
+const settingsBtn = document.getElementById('settingsBtn');
+if (settingsBtn) {
+    settingsBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = chrome.runtime.getURL('settings.html');
+    });
+}
 
 /**
  * Menu logic: toggling visibility and handling item clicks
  */
+const menuBtn = document.getElementById('menuBtn');
 if (menuBtn) {
+    // Close menu on outside click
+    document.addEventListener('click', (e) => {
+        const container = document.getElementById('menuContainer');
+        if (!container || !container.classList.contains('visible')) return;
+        if (!menuBtn.contains(e.target) && !container.contains(e.target)) {
+            container.classList.remove('visible');
+        }
+    });
+
+    // Toggle menu on button press (supports both click and keyboard)
     menuBtn.addEventListener('click', () => {
         const container = document.getElementById('menuContainer');
         if (container) {
             container.classList.toggle('visible');
+            container.focus();
+        }
+    });
+
+    // Allow opening with Enter/Space when focused
+    menuBtn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            menuBtn.click();
         }
     });
 }
