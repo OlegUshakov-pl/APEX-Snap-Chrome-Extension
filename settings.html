@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>ApexScan - Settings</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; border-radius: 0 !important; }
         html, body { height: 100%; font-family: "Segoe UI", sans-serif; }
         body {
             background: linear-gradient(180deg, #d8d8ec 0%, #e6dcdd 60%, #f2dcd7 100%);
@@ -17,60 +17,59 @@
             padding: 24px;
         }
 
-        h1 { font-size: 24px; color: #444; margin-bottom: 20px; }
+        h1 { font-size: 28px; color: #444; margin-bottom: 20px; }
 
         .back-link {
             display: inline-block;
-            font-size: 12px;
-            color: #0066bb;
+            font-size: 14px;
+            color: #4a90d9;
             text-decoration: none;
             margin-bottom: 16px;
         }
         .back-link:hover { text-decoration: underline; }
 
         .config-section {
-            margin: 16px 0;
+            margin: 20px 0;
             padding: 14px;
             background: white;
-            border-radius: 6px;
+            border: 1px solid #ccc;
         }
         .section-title {
-            font-size: 13px;
-            color: #444;
-            font-weight: 600;
-            margin-bottom: 8px;
+            font-size: 15px;
+            color: #333;
+            font-weight: 700;
+            margin-bottom: 12px;
         }
 
         label {
             display: block;
-            font-size: 12px;
+            font-size: 14px;
             color: #444;
-            margin: 10px 0 4px;
+            margin: 12px 0 6px;
         }
         input[type="text"], select {
             width: 100%;
-            padding: 7px 10px;
+            padding: 10px;
             border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 13px;
+            font-size: 14px;
         }
 
         .save-btn {
             width: 100%;
-            padding: 10px;
-            background: #0078D4;
+            padding: 12px;
+            background: #4a90d9;
             color: white;
             border: none;
-            border-radius: 5px;
-            font-size: 14px;
+            font-size: 16px;
             cursor: pointer;
-            margin-top: 20px;
+            margin-top: 25px;
+            box-shadow: 0px 2px 2px 0px rgba(0, 0, 0, 0.25);
         }
         .save-btn:hover { opacity: 0.9; }
 
         .status {
             margin-top: 10px;
-            font-size: 12px;
+            font-size: 14px;
             text-align: center;
             min-height: 18px;
             color: #444;
@@ -90,24 +89,23 @@
             gap: 6px;
         }
         .server-btn {
-            padding: 6px 12px;
-            font-size: 11px;
-            border-radius: 4px;
+            padding: 8px 15px;
+            font-size: 13px;
             border: 1px solid #ccc;
             background: white;
             cursor: pointer;
             color: #333;
+            box-shadow: 0px 2px 2px 0px rgba(0, 0, 0, 0.25);
         }
         .server-btn.active {
-            background: #0078D4;
+            background: #4a90d9;
             color: white;
-            border-color: #0078D4;
+            border-color: #4a90d9;
         }
 
         .lamp-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
+            width: 14px;
+            height: 14px;
             display: inline-block;
             border: 1px solid #999;
         }
@@ -116,12 +114,12 @@
         .lamp-yellow { background-color: #ffc107; box-shadow: 0 0 5px #ffc107; }
 
         .models-list {
-            font-size: 11px;
+            font-size: 13px;
             background: rgba(255, 255, 255, 0.5);
-            padding: 8px;
-            border-radius: 4px;
-            margin-top: 8px;
-            max-height: 160px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+            max-height: 180px;
             overflow: auto;
             color: #444;
         }
@@ -142,21 +140,21 @@
             <div class="section-title">AI Server (for page analysis)</div>
 
             <!-- 5. Layout: Ollama -> LM Studio -> Refresh -->
-            <div style="margin-bottom: 10px;">
+            <div style="margin-bottom: 25px;">
                 <div class="server-row">
                     <span class="lamp-indicator lamp-yellow" id="ollamaLamp"></span>
                     <button id="ollamaBtn" class="server-btn active">Ollama</button
                 </div>
             </div>
 
-            <div style="margin-bottom: 10px;">
+            <div style="margin-bottom: 25px;">
                 <div class="server-row">
                     <span class="lamp-indicator lamp-yellow" id="lmstudioLamp"></span>
-                    <button id="lmstudioBtn" class="server-btn">LM Studio</button>
+                    <button id="lmstudioBtn" class="server-btn">LM Studio</button
                 </div>
             </div>
 
-            <div style="margin-bottom: 10px;">
+            <div style="margin-bottom: 25px;">
                 <button id="refreshBtn" class="server-btn" style="width: 100%;">Refresh Connection</button>
             </div>
 
