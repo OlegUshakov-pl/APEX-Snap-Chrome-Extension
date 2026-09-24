@@ -33,13 +33,29 @@ Example output:
 }`;
 
 // Gets current configuration from storage or default
-function getAIConfig() {
+async function getAIConfig() {
     return new Promise((resolve) => {
         chrome.storage.sync.get(['ai_config'], (result) => {
             const config = result.ai_config || DEFAULT_CONFIG;
             resolve(config);
         });
     });
+}
+
+// Get Ollama URL based on saved port
+function getOllamaUrl(savedPort) {
+    if (savedPort) {
+        return `http://127.0.0.1:${savedPort}`;
+    }
+    return DEFAULT_CONFIG.ollama.url;
+}
+
+// Get LM Studio URL based on saved port
+function getLMStudioUrl(savedPort) {
+    if (savedPort) {
+        return `http://127.0.0.1:${savedPort}`;
+    }
+    return DEFAULT_CONFIG.lmstudio.url;
 }
 
 // Saves AI configuration
@@ -61,12 +77,13 @@ async function analyzePageText(textOrFilesList, serverChoice = "ollama") {
     
     if (serverChoice === "lmstudio" || config.server === "lmstudio") {
         // LM Studio uses OpenAI-compatible endpoint
-        apiUrl = `${config.lmstudio.url}/v1/chat/completions`;
+        apiUrl = getLMStudioUrl(config.lmstudio?.port);
+        apiUrl = `${apiUrl}/v1/chat/completions`;
         model = config.lmstudio.model || null; // LM Studio uses loaded model
     } else {
         // Ollama default
-        apiUrl = `${config.ollama.url}/api/generate`;
-        model = config.ollama.model || "llama3";
+        apiUrl = getOllamaUrl(config.ollama?.port);
+        apiUrl = `${apiUrl}?model=${encodeURIComponent(model || (config.ollama?.model || "llama3"))}&prompt=${encodeURIComponent(prompt)}&stream=false`;
     }
     
     const prompt = `Analyze web page text and return JSON:\n\n${textOrFilesList.substring(0, 2000)}`;
@@ -75,11 +92,16 @@ async function analyzePageText(textOrFilesList, serverChoice = "ollama") {
     if (serverChoice === "lmstudio" || config.server === "lmstudio") {
         return await callLMStudio(apiUrl, prompt);
     } else {
-        return await callOllama(apiUrl, model, prompt);
+        // Ollama: need to construct the full URL
+        const baseOllamaUrl = getOllamaUrl(config.ollama?.port);
+        apiUrl = `${baseOllamaUrl}?model=${encodeURIComponent(model || (config.ollama?.model || "llama3"))}&prompt=${encodeURIComponent(prompt)}&stream=false`;
+        return await callOllama(apiUrl, model || (config.ollama?.model || "llama3"), prompt);
     }
 }
 
-// Calls Ollama API
+/**
+ * Calls Ollama API
+ */
 async function callOllama(url, model, promptText) {
     try {
         const response = await fetch(`${url}?model=${encodeURIComponent(model)}&prompt=${encodeURIComponent(promptText)}&stream=false`);
@@ -91,10 +113,12 @@ async function callOllama(url, model, promptText) {
     }
 }
 
-// Calls LM Studio API (OpenAI-compatible)
+/**
+ * Calls LM Studio API (OpenAI-compatible)
+ */
 async function callLMStudio(url, promptText) {
     try {
-        const response = await fetch(url, {
+        const response = await fetch(`${url}/v1/chat/completions`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

@@ -4,7 +4,7 @@
 const ollamaBtn = document.getElementById('ollamaBtn');
 const lmstudioBtn = document.getElementById('lmstudioBtn');
 const ollamaPortInput = document.getElementById('ollamaPort');
-const lmstudioPortInput = 'lmstudioPort'; // We'll use getElementById later
+const lmstudioPortInput = document.getElementById('lmstudioPort');
 const modelNameSelect = document.getElementById('modelSelect');
 const fastapiUrlInput = document.getElementById('serverUrl');
 const storagePathInput = document.getElementById('storagePathInput');
@@ -12,13 +12,19 @@ const browseBtn = document.getElementById('browseBtn');
 const saveBtn = document.getElementById('saveBtn');
 const saveStatus = document.getElementById('saveStatus');
 const refreshBtn = document.getElementById('refreshBtn');
+const ollamaLamp = document.getElementById('ollamaLamp');
+const lmstudioLamp = document.getElementById('lmstudioLamp');
+const ollamaStatus = document.getElementById('ollamaStatus');
+const lmstudioStatus = document.getElementById('lmstudioStatus');
 
-// Note: the previous version of settings.js had some weird IDs like 'button-for-browse-but-the-id-is-actually-browseBtn'
-// But in settings.html it is just 'browseBtn'. 
-// I will re-fetch them to be sure.
-
-const lmstudioPortInputEl = document.getElementById('lmstudioPort');
 const backBtn = document.getElementById('backBtn');
+
+// Get port from button data attribute
+function getSelectedPort(server) {
+    return server === 'ollama' 
+        ? ollamaBtn.getAttribute('data-port') || '11434' 
+        : lmstudioBtn.getAttribute('data-port') || '1234';
+}
 
 /**
  * Updates the UI based on which AI server is selected.
@@ -44,9 +50,8 @@ function updateUIForServer(server) {
  */
 async function refreshModels() {
     const isOllama = ollamaBtn.classList.contains('active');
-    const url = isOllama 
-        ? `http://127.0.0.1:${ollamaPortInput.value}` 
-        : `http://127.0.0.1:${lmstudioPortInputEl.value}`;
+    const port = getSelectedPort(isOllama ? 'ollama' : 'lmstudio');
+    const url = `http://127.0.0.1:${port}`;
 
     try {
         let models = [];
@@ -56,12 +61,18 @@ async function refreshModels() {
             models = await window.aiService.fetchLMStudioModels(url);
         }
 
+        // Update lamp indicator - green if connection works
+        ollamaLamp.className = 'lamp-indicator ' + (isOllama ? 'lamp-green' : 'lamp-red');
+        lmstudioLamp.className = 'lamp-indicator ' + (!isOllama ? 'lamp-green' : 'lamp-red');
+        ollamaStatus.textContent = isOllama ? (models.length > 0 ? 'Connected' : 'Not connected') : 'Not active';
+        lmstudioStatus.textContent = !isOllama ? (models.length > 0 ? 'Connected' : 'Not connected') : 'Not active';
+
         // Update Select element
         modelNameSelect.innerHTML = '<option value="">Select a model...</option>';
         if (models.length === 0) {
             const opt = document.createElement('option');
             opt.value = "";
-            opt.text = "No models found";
+            opt.text = models.length === 1 ? "No models found" : "No models found";
             modelNameSelect.appendChild(opt);
         } else {
             models.forEach(m => {
@@ -76,20 +87,74 @@ async function refreshModels() {
     }
 }
 
+/**
+ * Checks if the selected server is installed
+ */
+async function checkServerInstallation(server) {
+    if (server === 'ollama') {
+        try {
+            const res = await fetch('http://127.0.0.1:11434/api/version', { method: 'HEAD' });
+            ollamaStatus.textContent = res.ok ? 'Installed' : 'isn\'t installed';
+            ollamaStatus.style.color = res.ok ? '#28a745' : '#dc3545';
+        } catch (e) {
+            ollamaStatus.textContent = 'isn\'t installed';
+            ollamaStatus.style.color = '#dc3545';
+        }
+    } else {
+        try {
+            const res = await fetch('http://127.0.0.1:1234/v1/models', { method: 'HEAD' });
+            lmstudioStatus.textContent = res.ok ? 'Installed' : 'isn\'t installed';
+            lmstudioStatus.style.color = res.ok ? '#28a745' : '#dc3545';
+        } catch (e) {
+            lmstudioStatus.textContent = 'isn\'t installed';
+            lmstudioStatus.style.color = '#dc3545';
+        }
+    }
+}
+
+async function checkServerInstallation(server) {
+    if (server === 'ollama') {
+        try {
+            const res = await fetch('http://127.0.0.1:11434/api/version', { method: 'HEAD' });
+            ollamaStatus.textContent = res.ok ? 'Installed' : 'isn\'t installed';
+            ollamaStatus.style.color = res.ok ? '#28a745' : '#dc3545';
+        } catch (e) {
+            ollamaStatus.textContent = 'isn\'t installed';
+            ollamaStatus.style.color = '#dc3545';
+        }
+    } else {
+        try {
+            const res = await fetch('http://127.0.0.1:1234/v1/models', { method: 'HEAD' });
+            lmstudioStatus.textContent = res.ok ? 'Installed' : 'isn\'t installed';
+            lmstudioStatus.style.color = res.ok ? '#28a745' : '#dc3545';
+        } catch (e) {
+            lmstudioStatus.textContent = 'isn\'t installed';
+            lmstudioStatus.style.color = '#dc3545';
+        }
+    }
+}
+
 // Event Listeners
 
 ollamaBtn.addEventListener('click', () => {
     updateUIForServer('ollama');
+    ollamaPortInput.value = '11434';
+    lmstudioPortInput.value = '1234';
 });
 
 lmstudioBtn.addEventListener('click', () => {
     updateUIForServer('lmstudio');
+    ollamaPortInput.value = '11434';
+    lmstudioPortInput.value = '1234';
 });
 
 refreshBtn.addEventListener('click', async () => {
-    refreshStatus("Connecting...");
+    refreshStatus("Checking connection...");
+    // Check if server is installed
+    await checkServerInstallation(ollamaBtn.classList.contains('active') ? 'ollama' : 'lmstudio');
+    // Refresh models to get connection status
     await refreshModels();
-    refreshStatus("Connected");
+    refreshStatus(models.length > 0 ? "Connected" : "Check installation or connection");
 });
 
 // For "Browse" - in modern browsers, we can use the File System Access API if permission is granted
@@ -114,12 +179,11 @@ saveBtn.addEventListener('click', async () => {
             server_url: fastapiUrlInput.value,
             ai_config: {
                 server: ollamaBtn.classList.contains('active') ? 'ollama' : 'lmstudio',
+                port: getSelectedPort(ollamaBtn.classList.contains('active') ? 'ollama' : 'lmstudio'),
                 ollama: {
-                    url: `http://127.0.0.1:${ollamaPortInput.value}`,
                     model: modelNameSelect.value || "llama3"
                 },
                 lmstudio: {
-                    url: `http://127.0.0.1:${lmstudioPortInputEl.value}`,
                     model: modelNameSelect.value || ""
                 }
             }
@@ -142,6 +206,19 @@ function refreshStatus(msg) {
 
 // Initialization on load
 window.addEventListener('load', async () => {
+    // Check installations first
+    ollamaStatus.textContent = 'Checking...';
+    lmstudioStatus.textContent = 'Checking...';
+    
+    try {
+        await Promise.all([
+            checkServerInstallation('ollama'),
+            checkServerInstallation('lmstudio')
+        ]);
+    } catch (e) {
+        console.error('Check installation error:', e);
+    }
+    
     // Load initial configuration from storage
     const result = await chrome.storage.sync.get(['server_url', 'ai_config']);
     
@@ -164,20 +241,16 @@ window.addEventListener('load', async () => {
             document.getElementById('lmstudioPortLabel').style.display = 'block';
         }
 
+        // Set default ports
+        ollamaPortInput.value = '11434';
+        lmstudioPortInput.value = '1234';
+
         if (config.ollama) {
-            // Parse URL to get port if it's just http://127.0.0.1:PORT
-            try {
-                const url = new URL(config.ollama.url);
-                ollamaPortInput.value = url.port || "11434";
-            } catch(e) {}
+            ollamaPortInput.value = config.ollama.port || '11434';
         }
 
         if (config.lmstudio) {
-             // Parse URL to get port if it's just http://127.0.0.1:PORT
-             try {
-                const url = new URL(config.lmstudio.url);
-                lmstudioPortInputEl.value = url.port || "1234";
-             } catch(e) {}
+             lmstudioPortInput.value = config.lmstudio.port || '1234';
         }
 
         if (config.ollama?.model) modelNameSelect.value = config.ollama.model;

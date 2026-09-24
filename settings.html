@@ -110,10 +110,20 @@
             border-radius: 50%;
             display: inline-block;
             border: 1px solid #999;
+            transition: background-color 0.3s, box-shadow 0.3s;
         }
-        .lamp-green { background-color: #28a745; box-shadow: 0 0 5px #28a745; }
-        .lamp-red { background-color: #dc3545; box-shadow: 0 0 5px #dc3545; }
-        .lamp-yellow { background-color: #ffc107; box-shadow: 0 0 5px #ffc107; }
+        .lamp-green { 
+            background-color: #28a745; 
+            box-shadow: 0 0 5px #28a745; 
+        }
+        .lamp-red { 
+            background-color: #dc3545; 
+            box-shadow: 0 0 5px #dc3545; 
+        }
+        .lamp-yellow { 
+            background-color: #ffc107; 
+            box-shadow: 0 0 5px #ffc107; 
+        }
 
         .models-list {
             font-size: 13px;
@@ -143,16 +153,18 @@
 
             <!-- 5. Layout: Ollama -> LM Studio -> Refresh -->
             <div style="margin-bottom: 10px;">
-                <div class="server-row">
-                    <span class="lamp-indicator lamp-yellow" id="ollamaLamp"></span>
-                    <button id="ollamaBtn" class="server-btn active">Ollama</button>
+                <div class="server-row" style="align-items: center; gap: 4px;">
+                    <span class="lamp-indicator lamp-green" id="ollamaLamp"></span>
+                    <button id="ollamaBtn" class="server-btn active" data-port="11434">Ollama</button>
+                    <span class="install-status" id="ollamaStatus" style="font-size: 11px; color: #999;">Checking...</span>
                 </div>
             </div>
 
             <div style="margin-bottom: 10px;">
-                <div class="server-row">
-                    <span class="lamp-indicator lamp-yellow" id="lmstudioLamp"></span>
-                    <button id="lmstudioBtn" class="server-btn">LM Studio</button>
+                <div class="server-row" style="align-items: center; gap: 4px;">
+                    <span class="lamp-indicator lamp-red" id="lmstudioLamp"></span>
+                    <button id="lmstudioBtn" class="server-btn" data-port="1234">LM Studio</button>
+                    <span class="install-status" id="lmstudioStatus" style="font-size: 11px; color: #999;">Checking...</span>
                 </div>
             </div>
 
