@@ -19,6 +19,12 @@ const lmstudioStatus = document.getElementById('lmstudioStatus');
 
 const backBtn = document.getElementById('backBtn');
 
+// Storage path display element
+const storagePathLabel = document.createElement('div');
+storagePathLabel.style.cssText = 'margin-top: 8px; font-size: 12px; color: #444; min-height: 18px;';
+storagePathLabel.textContent = 'Path: Not selected';
+storagePathInput.parentNode.insertBefore(storagePathLabel, browseBtn);
+
 // Get port from button data attribute
 function getSelectedPort(server) {
     return server === 'ollama' 
@@ -112,6 +118,37 @@ async function checkServerInstallation(server) {
     }
 }
 
+/**
+ * Handles directory selection via File System Access API
+ */
+async function handleDirectorySelection() {
+    try {
+        const dirHandle = await window.showDirectoryPicker();
+        // Try to get the path string (works in Chrome)
+        let pathStr = '';
+        if ('handle' in dirHandle) {
+            // Check if we can resolve to a path string
+            try {
+                pathStr = dirHandle.kind === 'directory' 
+                    ? dirHandle.remoteInstance?.path?.toString() || dirHandle.name
+                    : dirHandle.remoteInstance?.path?.toString();
+            } catch(e) {
+                pathStr = dirHandle.name;
+            }
+        }
+        
+        storagePathInput.value = pathStr || dirHandle.name;
+        saveStatus.textContent = "Folder selected";
+        saveStatus.style.color = "#28a745";
+    } catch (e) {
+        console.warn("Directory picker cancelled or not supported", e);
+        if (e.name !== 'AbortError') {
+            // User cancelled or API not supported
+            saveStatus.textContent = "Please select a folder";
+            saveStatus.style.color = "#ffc107";
+        }
+    }
+}
 async function checkServerInstallation(server) {
     if (server === 'ollama') {
         try {
@@ -136,6 +173,8 @@ async function checkServerInstallation(server) {
 
 // Event Listeners
 
+// Event Listeners
+
 ollamaBtn.addEventListener('click', () => {
     updateUIForServer('ollama');
     ollamaPortInput.value = '11434';
@@ -157,21 +196,7 @@ refreshBtn.addEventListener('click', async () => {
     refreshStatus(models.length > 0 ? "Connected" : "Check installation or connection");
 });
 
-// For "Browse" - in modern browsers, we can use the File System Access API if permission is granted
-browseBtn.addEventListener('click', async () => {
-    try {
-        // This might prompt for a directory selection
-        const directoryHandle = await window.showDirectoryPicker();
-        // In a real extension, you'd handle this differently, 
-        // but let's assume we want to save the path string (if available) or just show it worked.
-        // For now, we will just simulate it for user experience.
-        saveStatus.textContent = "Folder selected";
-        saveStatus.style.color = "#28a745";
-    } catch (e) {
-        console.warn("Directory picker cancelled or not supported", e);
-        // If showDirectoryPicker is not available, fallback to nothing for now.
-    }
-});
+browseBtn.addEventListener('click', handleDirectorySelection);
 
 saveBtn.addEventListener('click', async () => {
     try {
@@ -186,7 +211,8 @@ saveBtn.addEventListener('click', async () => {
                 lmstudio: {
                     model: modelNameSelect.value || ""
                 }
-            }
+            },
+            storage_path: storagePathInput.value
         };
 
         await chrome.storage.sync.set(config);
@@ -220,10 +246,17 @@ window.addEventListener('load', async () => {
     }
     
     // Load initial configuration from storage
-    const result = await chrome.storage.sync.get(['server_url', 'ai_config']);
+    const result = await chrome.storage.sync.get(['server_url', 'ai_config', 'storage_path']);
     
     if (result.server_url) {
         fastapiUrlInput.value = result.server_url;
+    }
+    
+    if (result.storage_path) {
+        storagePathInput.value = result.storage_path;
+        storagePathLabel.textContent = 'Path: ' + result.storage_path;
+        saveStatus.textContent = "Settings loaded";
+        saveStatus.style.color = "#28a745";
     }
     
     if (result.ai_config) {
