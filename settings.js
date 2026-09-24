@@ -114,8 +114,9 @@ browseBtn.addEventListener('click', async () => {
         console.error("Directory picker failed:", error);
         saveStatus.textContent = 'Failed to pick folder';
         saveStatus.style.color = '#dc3545';
-    }
-});
+    // Back link returns to the index page
+    backBtn.href = chrome.runtime.getURL('index.html');
+}
 
 // ---------- Save ----------
 
@@ -153,7 +154,7 @@ async function saveSettings() {
         saveStatus.style.color = '#28a745';
         setTimeout(() => {
             saveStatus.textContent = '';
-            window.location.href = 'search.html';
+            window.location.href = 'index.html';
         }, 1000);
     } catch (error) {
         console.error("Save error:", error);
