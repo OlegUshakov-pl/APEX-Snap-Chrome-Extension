@@ -118,11 +118,10 @@ if (menuBtn) {
         e.stopPropagation(); // Prevent closing immediately
         const container = document.getElementById('menuContainer');
         if (container) {
-            container.classList.toggle('visible');
-            if (!container.classList.contains('visible')) {
-                container.classList.add('hidden');
-            } else {
-                container.classList.remove('hidden');
+            const menuList = container.querySelector('.dropdown-menu');
+            if (menuList) {
+                container.classList.toggle('visible');
+                menuList.classList.toggle('hidden');
             }
             container.focus();
         }
