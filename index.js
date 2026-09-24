@@ -130,15 +130,7 @@ if (menuBtn) {
     });
 }
 
-// Handle menu items selection
-document.querySelectorAll('.menu-item').forEach(item => {
-    item.addEventListener('click', () => {
-        const targetFile = item.getAttribute('data-target');
-        if (targetFile) {
-            window.location.href = chrome.runtime.getURL(`${targetFile}.html`);
-        }
-    });
-});
+// Remove the old menu-item click handlers since links now navigate directly
 
 // Focus the search field on load
 window.addEventListener('load', () => {

@@ -4,13 +4,45 @@
     <meta charset="UTF-8">
         <title>File List</title>
         <style>
-            body { background: #f0f2f5; font-family: sans-serif; padding:         20px; }
-            h1 { color: #333; }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            html, body {
+                height: 100%;
+                font-family: "Segoe UI", sans-serif;
+            }
+            /* Soft purple -> pink gradient like the main page */
+            body {
+                background: linear-gradient(180deg, #d8d8ec 0%, #e6dcdd 60%, #f2dcd7 100%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .container {
+                background: white;
+                padding: 40px 50px;
+                border-radius: 16px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+                text-align: center;
+            }
+            h1 { color: #333; margin-bottom: 16px; font-size: 28px; }
+            p { color: #666; margin-bottom: 24px; line-height: 1.6; }
+            .back-link {
+                display: inline-block;
+                padding: 10px 24px;
+                background: #0078D4;
+                color: white;
+                text-decoration: none;
+                border-radius: 8px;
+                font-size: 14px;
+                transition: background 0.3s;
+            }
+            .back-link:hover { background: #005a9e; }
         </style>
     </head>
     <body>
-        <h1>File List</h1>
-        <p>This page lists all snapshots.</p>
-        <a href="index.html">Back to Index</a>
+        <div class="container">
+            <h1>File List</h1>
+            <p>View and manage all saved snapshot files.</p>
+            <a href="index.html" class="back-link">← Back to Search</a>
+        </div>
     </body>
 </html>
