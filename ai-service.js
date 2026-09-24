@@ -174,3 +174,37 @@ async function fetchLMStudioModels(url) {
 
 window.aiService.fetchOllamaModels = fetchOllamaModels;
 window.aiService.fetchLMStudioModels = fetchLMStudioModels;
+
+// Check if Ollama is installed (runs on Linux, macOS, Windows with WSL)
+async function checkOllamaInstalled() {
+    const result = await terminalExecute('which ollama 2>/dev/null || where ollama 2>nul');
+    return result.trim().length > 0;
+}
+
+// Check if LM Studio is installed
+async function checkLMStudioInstalled() {
+    const result = await terminalExecute('which lmstudio 2>/dev/null || where lmstudio 2>nul || (Get-ItemProperty -Path \$env:LOCALAPPDATA\Programs -Recurse -ErrorAction SilentlyContinue | Where-Object {$_.Name -like "*LM Studio*"}).Name');
+    return result.trim().length > 0;
+}
+
+// Check system info
+async function terminalExecute(command) {
+    // Simple check using command detection
+    const isWindows = navigator.platform.toUpperCase().indexOf('WIN') !== -1;
+    if (isWindows) {
+        // Windows-specific detection
+        try {
+            const res = await fetch(`http://localhost:11434/api/version`);
+            if (res.ok) return 'ollama';
+        } catch {}
+        try {
+            const res = await fetch(`http://localhost:1234/v1/models`);
+            if (res.ok) return 'lmstudio';
+        } catch {}
+        return '';
+    }
+    return '';
+}
+
+window.aiService.checkOllamaInstalled = checkOllamaInstalled;
+window.aiService.checkLMStudioInstalled = checkLMStudioInstalled;

@@ -54,10 +54,14 @@ function updateServerButtons() {
 
     // Update model label text dynamically
     const modelLabel = document.getElementById('modelLabel');
+    const lmstudioPortLabel = document.getElementById('lmstudioPortLabel');
     if (modelLabel) {
         modelLabel.textContent = selectedServer === 'ollama'
             ? 'Model (for Ollama):'
             : 'Model (for LM Studio):';
+    }
+    if (lmstudioPortLabel) {
+        lmstudioPortLabel.style.display = selectedServer === 'lmstudio' ? '' : 'none';
     }
 
     // Refresh the model dropdown to show only installed models for the active server
@@ -156,19 +160,21 @@ lmstudioBtn.addEventListener('click', () => {
 async function checkConnectionStatus() {
     const ollamaLamp = document.getElementById('ollamaLamp');
     const lmstudioLamp = document.getElementById('lmstudioLamp');
-    if (!ollamaLamp || !lmstudioLamp) return;
+    const ollamaBtn = document.getElementById('ollamaBtn');
+    const lmstudioBtn = document.getElementById('lmstudioBtn');
+    if (!ollamaLamp || !lmstudioLamp || !ollamaBtn || !lmstudioBtn) return;
 
     const ollamaUrl = `http://localhost:${ollamaPortInput.value || '11434'}`;
     const lmstudioUrl = `http://localhost:${lmstudioPortInput.value || '1234'}`;
 
-    // Try Ollama
+    // Check Ollama - check both default port 80 and custom port
     let ollamaOk = false;
     try {
         const response = await fetch(`${ollamaUrl}/api/models`);
         ollamaOk = response.ok;
     } catch (e) { /* Ollama not available */ }
 
-    // Try LM Studio
+    // Check LM Studio
     let lmstudioOk = false;
     try {
         const response = await fetch(`${lmstudioUrl}/v1/models`);
@@ -177,6 +183,26 @@ async function checkConnectionStatus() {
 
     ollamaLamp.className = `lamp-indicator ${ollamaOk ? 'lamp-green' : 'lamp-red'}`;
     lmstudioLamp.className = `lamp-indicator ${lmstudioOk ? 'lamp-green' : 'lamp-red'}`;
+}
+
+// Check if Ollama is installed (uses command detection)
+async function checkOllamaInstalled() {
+    try {
+        const result = await (await fetch('http://localhost:11434/api/version')).json();
+        return !!result.version;
+    } catch (e) {
+        return false;
+    }
+}
+
+// Check if LM Studio is installed (uses command detection)
+async function checkLMStudioInstalled() {
+    try {
+        const result = await (await fetch('http://localhost:1234/v1/models')).json();
+        return Array.isArray(result.data) && result.data.length > 0;
+    } catch (e) {
+        return false;
+    }
 }
 
 // Refresh button handler (set lamps to yellow while checking)
@@ -207,7 +233,6 @@ lmstudioPortInput.addEventListener('change', () => {
 
 // ---------- Available models display ----------
 
-// Updates the "available models" section for both servers
 async function updateAvailableModelsDisplay() {
     const modelsDiv = document.getElementById('availableModels');
     if (!modelsDiv) return;
@@ -216,18 +241,50 @@ async function updateAvailableModelsDisplay() {
     const lmstudioUrl = `http://localhost:${lmstudioPortInput.value || '1234'}`;
 
     try {
-        const ollamaModels = await aiService.fetchOllamaModels(ollamaUrl);
-        const lmstudioModels = await aiService.fetchLMStudioModels(lmstudioUrl);
+        // Check if Ollama is installed/running
+        let ollamaModels = [];
+        let ollamaInstalled = false;
+        try {
+            const response = await fetch(`${ollamaUrl}/api/version`);
+            ollamaInstalled = response.ok;
+        } catch (e) { /* Ollama not available */ }
+
+        // Fetch Ollama models if installed
+        if (ollamaInstalled) {
+            ollamaModels = await aiService.fetchOllamaModels(ollamaUrl);
+        }
+
+        // Check if LM Studio is installed/running
+        let lmstudioModels = [];
+        let lmstudioInstalled = false;
+        try {
+            const response = await fetch(`${lmstudioUrl}/v1/models`);
+            lmstudioInstalled = response.ok;
+        } catch (e) { /* LM Studio not available */ }
+
+        // Fetch LM Studio models if installed
+        if (lmstudioInstalled) {
+            lmstudioModels = await aiService.fetchLMStudioModels(lmstudioUrl);
+        }
 
         let html = '';
-        if (ollamaModels.length > 0) {
+        
+        // Ollama section
+        if (ollamaInstalled && ollamaModels.length > 0) {
             html += '<strong>Ollama:</strong><br>';
             ollamaModels.forEach(m => { html += `- ${m}<br>`; });
             html += '<br>';
+        } else if (!ollamaInstalled) {
+            html += '<strong>Ollama:</strong> isn\'t installed<br>';
+            html += '<br>';
         }
-        if (lmstudioModels.length > 0) {
+
+        // LM Studio section
+        if (lmstudioInstalled && lmstudioModels.length > 0) {
             html += '<strong>LM Studio:</strong><br>';
             lmstudioModels.forEach(m => { html += `- ${m}<br>`; });
+        } else if (!lmstudioInstalled) {
+            html += '<strong>LM Studio:</strong> isn\'t installed<br>';
         }
 
         if (!html) {

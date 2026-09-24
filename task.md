@@ -1,6 +1,6 @@
 1. на странице settings.html logo убираем.
 2. панели filedset убираем
-3. Port Ollama 11464 по умолчанию
+3. Port Ollama 11434 по умолчанию
 4. Port LM Studio 1234
 5. Кнопки Ollama c ламочкой ,ниже кнопка lm studio с лампочкой, ниже кнопка refresh
 6. когда я выбираю Ollama и нажимаю refresh ламочка должна гореть зеленым. Если ollama не установлена пишем права от кнопки isn't installed
