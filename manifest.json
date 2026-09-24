@@ -20,7 +20,7 @@
     "open_in_tab": true
   },
   "chrome_url_overrides": {
-    "startpage": "search.html"
+    "startpage": "index.html"
   },
   "icons": {
     "16": "assets/icon16.png",
