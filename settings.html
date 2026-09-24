@@ -138,28 +138,35 @@
             <input type="text" id="serverUrl" placeholder="e.g. 127.0.0.1:8000" value="127.0.0.1:8000">
         </div>
 
-        <div class="config-section">
+    <div class="config-section">
             <div class="section-title">AI Server (for page analysis)</div>
 
-            <div class="server-selection">
+            <!-- 5. Layout: Ollama -> LM Studio -> Refresh -->
+            <div style="margin-bottom: 10px;">
                 <div class="server-row">
                     <span class="lamp-indicator lamp-yellow" id="ollamaLamp"></span>
-                    <button id="ollamaBtn" class="server-btn active">Ollama</button>
-                </div>
-                <div class="server-row">
-                    <span class="lamp-indicator lamp-yellow" id="lmstudioLamp"></span>
-                    <button id="lmstudioBtn" class="server-btn">LM Studio</button>
-                    <button id="refreshBtn" class="server-btn">Refresh</button>
+                    <button id="ollamaBtn" class="server-btn active">Ollama</button
                 </div>
             </div>
 
+            <div style="margin-bottom: 10px;">
+                <div class="server-row">
+                    <span class="lamp-indicator lamp-yellow" id="lmstudioLamp"></span>
+                    <button id="lmstudioBtn" class="server-btn">LM Studio</button>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 10px;">
+                <button id="refreshBtn" class="server-btn" style="width: 100%;">Refresh Connection</button>
+            </div>
+
             <label id="portLabel">Port (Ollama):</label>
-            <input type="text" id="ollamaPort" placeholder="11434 (Ollama)" value="11434">
+            <input type="text" id="ollamaPort" placeholder="11434 (O Ollama)" value="11434">
 
             <label id="lmstudioPortLabel" style="display:none;">Port (LM Studio):</label>
             <input type="text" id="lmstudioPort" placeholder="1234 (LM Studio)" value="1234" style="display:none;">
 
-            <label id="modelLabel">Model (for Ollama):</label>
+            <label id="modelLabel">Model Selection:</label>
             <select id="modelSelect">
                 <option value="">Loading installed models...</option>
             </select>
