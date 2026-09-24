@@ -129,7 +129,10 @@ async function saveSettings() {
 
         saveStatus.textContent = 'Settings saved ✓';
         saveStatus.style.color = '#28a745';
-        setTimeout(() => { saveStatus.textContent = ''; }, 2000);
+        setTimeout(() => {
+            saveStatus.textContent = '';
+            window.location.href = 'search.html';
+        }, 1000);
     } catch (error) {
         console.error("Save error:", error);
         saveStatus.textContent = 'Save failed';
