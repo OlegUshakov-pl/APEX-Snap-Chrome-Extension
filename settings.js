@@ -170,7 +170,7 @@ async function checkConnectionStatus() {
     // Check Ollama - check both default port 80 and custom port
     let ollamaOk = false;
     try {
-        const response = await fetch(`${ollamaUrl}/api/models`);
+        const response = await fetch(`${ollamaUrl}/api/tags`);
         ollamaOk = response.ok;
     } catch (e) { /* Ollama not available */ }
 

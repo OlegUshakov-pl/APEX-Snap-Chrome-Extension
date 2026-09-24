@@ -155,11 +155,11 @@ window.aiService = {
 // Fetch models from Ollama
 async function fetchOllamaModels(url) {
     try {
-        const response = await fetch(`${url}/api/models`);
+        const response = await fetch(`${url}/api/tags`);
         if (!response.ok) throw new Error("Failed to fetch Ollama models");
         const data = await response.json();
         const models = Array.isArray(data) ? data : (data?.models || []);
-        return models.map(m => typeof m === 'string' ? m : (m?.id || '')).filter(Boolean);
+        return models.map(m => typeof m === 'string' ? m : (m?.name || m?.id || '')).filter(Boolean);
     } catch (error) {
         console.error("Ollama model fetch error:", error);
         return [];
