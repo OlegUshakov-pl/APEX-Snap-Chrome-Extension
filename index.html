@@ -53,7 +53,6 @@
             top: 56px;
             left:         24px;
             width: 100px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             flex-direction: column;
             z-index: 10;
             overflow: hidden;
@@ -66,11 +65,16 @@
 
         .menu-item {
             padding: 10px 15px;
-            font-size: 16px;
+            font-size: 14px;
             color: #333;
             text-decoration: none;
             border-bottom: 1px solid #eee;
             cursor: pointer;
+            line-height: 1.8;
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
         }
 
         .menu-item:hover {
