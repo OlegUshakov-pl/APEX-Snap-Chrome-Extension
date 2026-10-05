@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <title>ApexScan</title>
     <style>
         body { width: 320px; padding: 15px; font-family: sans-serif; background-color: #f0f2f5; }
         h3 { margin-top: 0; color: #333; }
@@ -12,12 +14,6 @@
             font-size: 13px;
         }
         button:hover { opacity: 0.9; }
-
-        /* Payment button */
-        .pay-btn { background: #28a745; }
-
-        /* Status */
-        .status { margin-top: 10px; font-size: 12px; text-align: center; min-height: 20px; }
 
         /* Server selection with lamp indicators */
         .server-row {
@@ -35,6 +31,7 @@
             cursor: pointer;
             color: #333;
         }
+        button.server-btn { width: auto; margin-top: 0; }
         .server-btn.active {
             background: #0078D4;
             color: white;
@@ -53,7 +50,24 @@
         .lamp-red { background-color: #dc3545; box-shadow: 0 0 5px #dc3545; }
         .lamp-yellow { background-color: #ffc107; box-shadow: 0 0 5px #ffc107; }
 
-        /* Available Models Display */
+        /* Configuration */
+        label { display: block; margin-top: 8px; font-size: 12px; color: #444; }
+        input[type="text"], select {
+            width: 100%; padding: 7px; margin-top: 4px;
+            border: 1px solid #ccc; border-radius: 4px; font-size: 13px;
+        }
+
+        /* Server URL readout */
+        .server-url {
+            margin-top: 8px; font-size: 11px; color: #555;
+            background: white; padding: 6px 8px; border-radius: 4px;
+            word-break: break-all;
+        }
+
+        /* Status */
+        .status { margin-top: 10px; font-size: 12px; text-align: center; min-height: 20px; }
+
+        /* Available models display */
         .models-list {
             font-size: 11px;
             background: white;
@@ -64,7 +78,7 @@
             overflow: auto;
         }
 
-        /* Result display */
+        /* AI result display */
         .result { font-size: 11px; background: white; padding: 8px; border-radius: 4px; margin-top: 8px; max-height: 150px; overflow: auto; }
     </style>
 </head>
@@ -88,32 +102,27 @@
     <!-- Folder analysis button -->
     <button id="folderBtn" style="width:100%; padding: 8px; margin-top: 8px; cursor: pointer; background: #6c757d; color: white; border: none; border-radius: 5px; font-size: 12px;">Analyze Folder</button>
 
-    <!-- Payment button (disabled) -->
-    <!-- <button id="payBtn" class="pay-btn" style="display:none;">Pay Blik (5 PLN)</button> -->
-
     <!-- Status -->
     <div class="status" id="status">Ready...</div>
 
     <!-- AI analysis result -->
     <div class="result" id="aiResult"></div>
 
-    <!-- Server configuration -->
+    <!-- AI server configuration -->
     <div class="config-section">
-        <label>Server URL:</label>
-        <input type="text" id="serverUrl" placeholder="11434 (Ollama) / 1234 (LM Studio)" value="11434" />
+        <label id="aiPortLabel" for="aiPort">Ollama port:</label>
+        <input type="text" id="aiPort" placeholder="11434 (Ollama) / 1234 (LM Studio)" value="11434" />
 
-        <label id="modelLabel">Model (for Ollama):</label>
+        <label id="modelLabel" for="modelSelect">Model (for Ollama):</label>
         <select id="modelSelect">
-            <option value="llama3">Llama 3</option>
-            <option value="llama2">Llama 2</option>
-            <option value="llama2-8b">Llama 2 (8B)</option>
-            <option value="mistral">Mistral</option>
-            <option value="gemma2">Gemma 2</option>
-            <option value="phi3">Phi 3</option>
+            <option value="">Select a model...</option>
         </select>
     </div>
 
-    <!-- Available Models Display -->
+    <!-- JSON server address (set on the settings page) -->
+    <div class="server-url">Server URL: <span id="serverUrlText">…</span></div>
+
+    <!-- Available models from both AI servers -->
     <div class="models-list" id="availableModels">
         <em>Scanning for models...</em>
     </div>

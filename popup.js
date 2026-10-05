@@ -1,349 +1,306 @@
-// popup.js - logic for Binary Snap AI extension
+// popup.js - ApexScan popup: capture page, AI analysis, send snapshot to server
 
 const snapBtn = document.getElementById('snapBtn');
 const folderBtn = document.getElementById('folderBtn');
 const statusDiv = document.getElementById('status');
 const aiResultDiv = document.getElementById('aiResult');
-
-// Server selection buttons
 const ollamaBtn = document.getElementById('ollamaBtn');
 const lmstudioBtn = document.getElementById('lmstudioBtn');
+const refreshBtn = document.getElementById('refreshBtn');
+const aiPortInput = document.getElementById('aiPort');
+const aiPortLabel = document.getElementById('aiPortLabel');
+const modelSelect = document.getElementById('modelSelect');
+const modelLabel = document.getElementById('modelLabel');
+const serverUrlText = document.getElementById('serverUrlText');
 
-// Configuration inputs
-const serverUrlInput = document.getElementById('serverUrl');
-const modelNameInput = document.getElementById('modelSelect');
-
+let selectedServer = "ollama"; // "ollama" or "lmstudio"
 let currentSnapData = null;
-let selectedServer = "ollama"; // default: ollama or lmstudio
 
-// Get current AI configuration on startup
-async function initConfig() {
-    const config = await aiService.getAIConfig();
-    
-    if (config) {
-        // Populate fields from storage
-        serverUrlInput.value = config.ollama?.url?.replace('http://localhost:', '') || '11434';
-        modelNameInput.value = config.ollama?.model || 'llama3';
-        
-        selectedServer = config.server || "ollama";
-        updateServerButtons();
-    }
+function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
 }
 
-// Updates server selection buttons
+function defaultPort(server) {
+    return server === 'ollama' ? '11434' : '1234';
+}
+
+// ---------- JSON server address (configured on the settings page) ----------
+
+async function getServerUrl() {
+    try {
+        const result = await chrome.storage.sync.get(['server_url']);
+        const url = String(result.server_url || '').trim();
+        if (url) {
+            return (/^https?:\/\//i.test(url) ? url : `http://${url}`).replace(/\/+$/, '');
+        }
+    } catch (e) {
+        console.warn("Failed to read server_url from storage", e);
+    }
+    return 'http://127.0.0.1:8000';
+}
+
+async function showServerUrl() {
+    if (serverUrlText) serverUrlText.textContent = await getServerUrl();
+}
+
+// ---------- configuration ----------
+
+async function initConfig() {
+    const config = await aiService.getAIConfig();
+
+    selectedServer = config.server || "ollama";
+    aiPortInput.value = config[selectedServer]?.port || defaultPort(selectedServer);
+
+    updateServerButtons();
+    await showServerUrl();
+}
+
 function updateServerButtons() {
     ollamaBtn.classList.toggle('active', selectedServer === "ollama");
     lmstudioBtn.classList.toggle('active', selectedServer === "lmstudio");
-    
-    // Update label text dynamically
-    const modelLabel = document.getElementById('modelLabel');
-    if (modelLabel) {
-        modelLabel.textContent = selectedServer === 'ollama' ? 'Model (for Ollama):' : 'Model (for LM Studio):';
-    }
+
+    const isOllama = selectedServer === 'ollama';
+    if (aiPortLabel) aiPortLabel.textContent = isOllama ? 'Ollama port:' : 'LM Studio port:';
+    if (modelLabel) modelLabel.textContent = isOllama ? 'Model (for Ollama):' : 'Model (for LM Studio):';
 }
 
-// Server switcher
-ollamaBtn.addEventListener('click', () => {
-    selectedServer = "ollama";
-    updateServerButtons();
-    saveCurrentConfig();
-    // Refresh model display and dropdown on server switch
-    updateAvailableModelsDisplay();
-    checkConnectionStatus();
-    refreshModelSelectForServer();
-});
-
-lmstudioBtn.addEventListener('click', () => {
-    selectedServer = "lmstudio";
-    updateServerButtons();
-    saveCurrentConfig();
-    // Refresh model display and dropdown on server switch
-    updateAvailableModelsDisplay();
-    checkConnectionStatus();
-    refreshModelSelectForServer();
-});
-
-// Refresh models when server URL changes
-serverUrlInput.addEventListener('change', () => {
-    updateAvailableModelsDisplay();
-    checkConnectionStatus();
-});
-
-// Saves current configuration
 async function saveCurrentConfig() {
     const config = await aiService.getAIConfig();
     config.server = selectedServer;
-    
-    if (selectedServer === "ollama") {
-        config.ollama.url = `http://localhost:${serverUrlInput.value || '11434'}`;
-        config.ollama.model = modelNameInput.value || "llama3";
-    } else {
-        config.lmstudio.url = `http://localhost:${serverUrlInput.value || '1234'}`;
-    }
-    
+
+    const port = String(aiPortInput.value || '').trim() || defaultPort(selectedServer);
+    config[selectedServer].port = port;
+    config[selectedServer].url = `http://127.0.0.1:${port}`;
+
+    const model = modelSelect.value;
+    if (model) config[selectedServer].model = model;
+
     await aiService.saveAIConfig(config);
 }
 
-// Handler for "Generate Snapshot" button
+async function switchServer(server) {
+    selectedServer = server;
+    updateServerButtons();
+    aiPortInput.value = (await aiService.getAIConfig())[server]?.port || defaultPort(server);
+    await saveCurrentConfig();
+
+    await Promise.all([
+        updateAvailableModelsDisplay(),
+        checkConnectionStatus(),
+        refreshModelSelectForServer()
+    ]);
+}
+
+ollamaBtn.addEventListener('click', () => switchServer('ollama'));
+lmstudioBtn.addEventListener('click', () => switchServer('lmstudio'));
+
+aiPortInput.addEventListener('change', async () => {
+    await saveCurrentConfig();
+    await Promise.all([updateAvailableModelsDisplay(), checkConnectionStatus()]);
+});
+
+modelSelect.addEventListener('change', () => saveCurrentConfig());
+
+// ---------- snapshot ----------
+
 snapBtn.addEventListener('click', async () => {
     statusDiv.textContent = "Generating snapshot...";
     aiResultDiv.textContent = "";
-    
-    // 1. Get active tab data
+
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    
     if (!tab?.url) {
         statusDiv.textContent = "No active page found.";
         return;
     }
-    
-    // 2. Send command to content script to capture data
-    const pageData = await sendMessageToContent("CAPTURE");
-    
-    if (pageData) {
-        // 3. Analyze text via AI service
-        statusDiv.textContent = "Analyzing via AI...";
-        
-        try {
-            const aiMetadata = await window.aiService.analyzePageText(
-                pageData.textSnippet, 
-                selectedServer
-            );
-            
-            // 4. Build snapshot with real data
-            currentSnapData = {
-                source_url: tab.url,
-                thumbnail_base64: pageData.thumbnail || "",
-                binary_data: generateBinaryHash(tab.url + Date.now()),
-                metadata_ai: aiMetadata
-            };
-            
-            // Display AI analysis result
-            aiResultDiv.innerHTML = formatAIResult(aiMetadata);
-            
-            statusDiv.textContent = "Sending to server...";
-            
-            // 5. Send data to FastAPI server
-            const result = await sendSnapToServer(currentSnapData);
-            
-            if (result?.status === "success") {
-                statusDiv.innerHTML = `Snapshot saved!<br>ID: ${result.snap_id}`;
-            } else {
-                // Even if server is unavailable, show AI result
-                statusDiv.textContent = "Snapshot generated locally.";
-            }
-            
-        } catch (error) {
-            console.error("AI error:", error);
-            statusDiv.textContent = "AI analysis failed. Using fallback...";
-            
-            // Fallback: use basic metadata without AI
-            currentSnapData = {
-                source_url: tab.url,
-                thumbnail_base64: "",
-                binary_data: generateBinaryHash(tab.url + Date.now()),
-                metadata_ai: { tags: [], sentiment: 0, summary: "AI unavailable", category: "other" }
-            };
-        }
+
+    const pageData = await capturePage(tab);
+    if (!pageData) {
+        statusDiv.textContent = "Cannot read this page (browser page?).";
+        return;
+    }
+
+    statusDiv.textContent = "Analyzing via AI...";
+
+    let thumbnail = "";
+    try {
+        thumbnail = await chrome.tabs.captureVisibleTab(null, { format: 'jpeg', quality: 60 });
+    } catch (e) {
+        console.warn("Screenshot unavailable:", e.message);
+    }
+
+    let aiMetadata;
+    try {
+        aiMetadata = await aiService.analyzePageText(pageData.textSnippet, selectedServer);
+    } catch (error) {
+        console.error("AI error:", error);
+        aiMetadata = { tags: [], sentiment: 0, summary: "AI unavailable", category: "other" };
+        statusDiv.textContent = "AI analysis failed. Using fallback...";
+    }
+
+    currentSnapData = {
+        source_url: tab.url,
+        thumbnail_base64: thumbnail,
+        metadata_ai: aiMetadata
+    };
+
+    aiResultDiv.innerHTML = formatAIResult(aiMetadata);
+    statusDiv.textContent = "Sending to server...";
+
+    const result = await sendSnapToServer(currentSnapData);
+    if (result?.status === "success") {
+        statusDiv.innerHTML = `Snapshot saved!<br>ID: ${escapeHtml(result.snap_id)}`;
     } else {
-        statusDiv.textContent = "Failed to capture page.";
+        statusDiv.textContent = "Server unavailable - snapshot kept locally.";
     }
 });
 
-// Handler for folder analysis button
+// Folder analysis button
 folderBtn.addEventListener('click', async () => {
     try {
-        // Check File System Access API support
-        if ('showDirectoryPicker' in window) {
-            const handle = await window.showDirectoryPicker();
-            statusDiv.textContent = `Selected folder: ${handle.name}`;
-            
-            // Get list of files in folder
-            const files = [];
-            for await (const entry of handle.values()) {
-                if (entry.kind === 'file') {
-                    files.push(entry);
-                }
-            }
-            
-            statusDiv.textContent = `Found ${files.length} files for analysis...`;
-            aiResultDiv.innerHTML = `<strong>Files:</strong><br>${files.map(f => `- ${f.name}`).join('<br>')}`;
-            
-            // Create folder snapshot
-            currentSnapData = {
-                source_url: `file://${handle.root.path}`,
-                thumbnail_base64: "",
-                binary_data: generateBinaryHash(handle.root.path + Date.now()),
-                metadata_ai: await aiService.analyzePageText(files.map(f => f.name).join('\n'), 'ollama')
-            };
-            
-            statusDiv.textContent = `Folder snapshot generated! ID: ${generateSnapId()}`;
-        } else {
+        if (!('showDirectoryPicker' in window)) {
             statusDiv.textContent = "Your browser doesn't support folder selection. Use Chrome/Edge.";
+            return;
         }
+
+        const handle = await window.showDirectoryPicker();
+        statusDiv.textContent = `Selected folder: ${handle.name}`;
+
+        const files = [];
+        for await (const entry of handle.values()) {
+            if (entry.kind === 'file') files.push(entry.name);
+        }
+
+        statusDiv.textContent = `Found ${files.length} files, analyzing...`;
+        aiResultDiv.innerHTML = `<strong>Files:</strong><br>${files.map(f => `- ${escapeHtml(f)}`).join('<br>')}`;
+
+        currentSnapData = {
+            source_url: `file:///${handle.name}`,
+            thumbnail_base64: "",
+            metadata_ai: await aiService.analyzePageText(files.join('\n'), selectedServer)
+        };
+
+        const result = await sendSnapToServer(currentSnapData);
+        statusDiv.textContent = result?.status === 'success'
+            ? `Folder snapshot saved! ID: ${result.snap_id}`
+            : `Folder snapshot generated locally (${files.length} files).`;
     } catch (error) {
         console.error("Folder error:", error);
-        statusDiv.textContent = "Error selecting folder";
+        statusDiv.textContent = error?.name === 'AbortError' ? "Folder selection cancelled" : "Error selecting folder";
     }
 });
 
-// Generates snapshot ID
-function generateSnapId() {
-    return 'snap_' + Date.now().toString(36).toUpperCase();
-}
+// ---------- page capture ----------
 
-// Sends message to content script and returns response
-function sendMessageToContent(type) {
-    return new Promise((resolve) => {
-        const [tab] = chrome.tabs.query({ active: true, currentWindow: true });
-        
-        if (!tab?.id) {
-            resolve(null);
-            return;
-        }
-        
-        chrome.tabs.sendMessage(tab.id, { type }, (response) => {
-            resolve(response || null);
-        });
-    });
-}
-
-// Sends snapshot to FastAPI server
-async function sendSnapToServer(data) {
+async function capturePage(tab) {
+    // 1) content script from the manifest
     try {
-        // Determine endpoint based on source type
-        const endpoint = data.source_url.startsWith('file://') 
-            ? '/api/add-folder-snap'  // Local folder
-            : '/api/add-snap';         // Web page
-        
-        console.log(`Sending to ${endpoint}...`);
-        
-        const response = await fetch(`${serverUrlInput.value || '11434'}${endpoint}?data=${encodeURIComponent(JSON.stringify(data))}`);
-        return await response.json();
-    } catch (error) {
-        console.warn('Server unavailable');
+        const response = await chrome.tabs.sendMessage(tab.id, { type: "CAPTURE" });
+        if (response && typeof response.textSnippet === 'string') return response;
+    } catch (e) {
+        console.warn("Content script not available, injecting:", e.message);
+    }
+
+    // 2) fallback: inject on demand
+    try {
+        const [injected] = await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: () => ({
+                url: location.href,
+                title: document.title,
+                textSnippet: (document.body && document.body.innerText ? document.body.innerText : '').substring(0, 2000),
+                timestamp: Date.now()
+            })
+        });
+        return injected?.result || null;
+    } catch (e) {
+        console.warn("Page capture failed:", e.message);
         return null;
     }
 }
 
-// Generates binary hash from string
-function generateBinaryHash(str) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash |= 0;
+// ---------- server ----------
+
+async function sendSnapToServer(data) {
+    try {
+        const base = await getServerUrl();
+        const endpoint = data.source_url.startsWith('file://')
+            ? '/api/add-folder-snap'
+            : '/api/add-snap';
+
+        console.log(`Sending to ${base}${endpoint}...`);
+        const response = await fetch(`${base}${endpoint}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            console.warn(`Server responded with ${response.status}`);
+            return null;
+        }
+        return await response.json();
+    } catch (error) {
+        console.warn('Server unavailable:', error.message);
+        return null;
     }
-    return hash.toString(2);
 }
 
-// Formats AI result for display
+// ---------- display ----------
+
 function formatAIResult(metadata) {
     if (!metadata) return "";
-    
-    let html = `<strong>Tags:</strong> ${metadata.tags?.join(', ') || 'none'}<br>`;
-    html += `<strong>Sentiment:</strong> ${metadata.sentiment}<br>`;
-    html += `<strong>Category:</strong> ${metadata.category}<br>`;
-    html += `<em>${metadata.summary}</em>`;
-    
+
+    let html = `<strong>Tags:</strong> ${escapeHtml((metadata.tags || []).join(', ') || 'none')}<br>`;
+    html += `<strong>Sentiment:</strong> ${escapeHtml(metadata.sentiment)}<br>`;
+    html += `<strong>Category:</strong> ${escapeHtml(metadata.category || 'other')}<br>`;
+    html += `<em>${escapeHtml(metadata.summary || '')}</em>`;
     return html;
 }
 
-// Checks connection status and updates individual lamp indicators
+// ---------- connection status / models ----------
+
+async function ping(url) {
+    try {
+        const response = await fetch(url);
+        return response.ok;
+    } catch (e) {
+        return false;
+    }
+}
+
 async function checkConnectionStatus() {
     const ollamaLamp = document.getElementById('ollamaLamp');
     const lmstudioLamp = document.getElementById('lmstudioLamp');
-    
     if (!ollamaLamp || !lmstudioLamp) return;
-    
-    const ollamaUrl = `http://localhost:${serverUrlInput.value || '11434'}`;
-    const lmstudioUrl = `http://localhost:${serverUrlInput.value || '1234'}`;
-    
-    // Try Ollama
-    let ollamaOk = false;
-    try {
-        const response = await fetch(`${ollamaUrl}/api/models`);
-        ollamaOk = response.ok;
-    } catch (e) {
-        /* Ollama not available */
-    }
-    
-    // Try LM Studio
-    let lmstudioOk = false;
-    try {
-        const response = await fetch(`${lmstudioUrl}/v1/models`);
-        lmstudioOk = response.ok;
-    } catch (e) {
-        /* LM Studio not available */
-    }
-    
-    // Update Ollama lamp
-    ollamaLamp.className = ollamaOk ? 'lamp-indicator lamp-green' : 'lamp-indicator lamp-red';
-    
-    // Update LM Studio lamp
-    lmstudioLamp.className = lmstudioOk ? 'lamp-indicator lamp-green' : 'lamp-indicator lamp-red';
+
+    const config = await aiService.getAIConfig();
+    const ollamaBase = aiService.serverBaseUrl(config, 'ollama');
+    const lmstudioBase = aiService.serverBaseUrl(config, 'lmstudio');
+
+    const [ollamaOk, lmstudioOk] = await Promise.all([
+        ping(`${ollamaBase}/api/tags`),
+        ping(`${lmstudioBase}/v1/models`)
+    ]);
+
+    ollamaLamp.className = `lamp-indicator ${ollamaOk ? 'lamp-green' : 'lamp-red'}`;
+    lmstudioLamp.className = `lamp-indicator ${lmstudioOk ? 'lamp-green' : 'lamp-red'}`;
 }
 
-// Refresh connection button handler
-const refreshBtn = document.getElementById('refreshBtn');
-if (refreshBtn) {
-    refreshBtn.addEventListener('click', async () => {
-        // Set lamps to yellow (checking)
-        const ollamaLamp = document.getElementById('ollamaLamp');
-        const lmstudioLamp = document.getElementById('lmstudioLamp');
-        
-        if (ollamaLamp) ollamaLamp.className = 'lamp-indicator lamp-yellow';
-        if (lmstudioLamp) lmstudioLamp.className = 'lamp-indicator lamp-yellow';
-        
-        // Check connection
-        await checkConnectionStatus();
-        
-        // Refresh models display
-        updateAvailableModelsDisplay();
-    });
-}
-
-// Fetches available models from the selected server
 async function fetchAvailableModels(config) {
-    try {
-        if (selectedServer === "ollama") {
-            const url = `http://localhost:${serverUrlInput.value || '11434'}/api/models`;
-            const response = await fetch(url);
-            if (!response.ok) throw new Error("Failed to fetch Ollama models");
-            const data = await response.json();
-            // Handle both array and object formats
-            const models = Array.isArray(data) ? data : (data?.models || []);
-            return models.map(m => typeof m === 'string' ? m : (m?.id || '')).filter(Boolean);
-        } else {
-            // LM Studio: model list comes from /v1/models endpoint (OpenAI-compatible)
-            const url = `${config?.lmstudio?.url || `http://localhost:${serverUrlInput.value || '1234'}`}/v1/models`;
-            const response = await fetch(url);
-            if (!response.ok) throw new Error("Failed to fetch LM Studio models");
-            const data = await response.json();
-            // Handle both array and object formats
-            const models = Array.isArray(data) ? data : (data?.data || []);
-            return models.map(m => typeof m === 'string' ? m : (m.id || '')).filter(Boolean);
-        }
-    } catch (error) {
-        console.warn('Server unavailable, using default models');
-        // Return default fallback models
-        return selectedServer === 'ollama' 
-            ? ['llama3', 'llama2', 'mistral', 'phi3'] 
-            : ['default-lm-studio'];
+    if (selectedServer === 'ollama') {
+        return aiService.fetchOllamaModels(aiService.serverBaseUrl(config, 'ollama'));
     }
+    return aiService.fetchLMStudioModels(aiService.serverBaseUrl(config, 'lmstudio'));
 }
 
-// Updates the model select dropdown with fetched models
-async function updateModelSelect(models) {
-    const modelSelect = document.getElementById('modelSelect');
+async function updateModelSelect(models, config) {
     if (!modelSelect) return;
-    
-    // Clear existing options except the first default one
+
     while (modelSelect.options.length > 1) {
         modelSelect.remove(1);
     }
-    
-    // Add fetched models with server type tag
+
     for (const model of models) {
         const option = document.createElement('option');
         option.value = model;
@@ -351,88 +308,67 @@ async function updateModelSelect(models) {
         option.textContent = model;
         modelSelect.appendChild(option);
     }
-}
 
-// Updates the available models display section
-async function updateAvailableModelsDisplay() {
-    const modelsDiv = document.getElementById('availableModels');
-    if (!modelsDiv) return;
-    
-    try {
-        // Fetch models from both Ollama and LM Studio
-        const ollamaUrl = `http://localhost:${serverUrlInput.value || '11434'}`;
-        const lmstudioUrl = `http://localhost:${serverUrlInput.value || '1234'}`;
-        
-        // Try fetching from Ollama
-        let ollamaModels = [];
-        try {
-            const response = await fetch(`${ollamaUrl}/api/models`);
-            if (response.ok) {
-                const data = await response.json();
-                ollamaModels = Array.isArray(data) ? data : (data?.models || []);
-            }
-        } catch (e) { /* Ollama not available */ }
-        
-        // Try fetching from LM Studio
-        let lmstudioModels = [];
-        try {
-            const response = await fetch(`${lmstudioUrl}/v1/models`);
-            if (response.ok) {
-                const data = await response.json();
-                lmstudioModels = Array.isArray(data) ? data : (data?.data || []).map(m => m.id || '');
-            }
-        } catch (e) { /* LM Studio not available */ }
-        
-        // Display results
-        let html = '';
-        if (ollamaModels.length > 0) {
-            html += '<strong>Ollama:</strong><br>';
-            ollamaModels.forEach(m => {
-                const modelName = typeof m === 'string' ? m : (m.id || '');
-                if (modelName) html += `- ${modelName}<br>`;
-            });
-            html += '<br>';
-        }
-        
-        if (lmstudioModels.length > 0) {
-            html += '<strong>LM Studio:</strong><br>';
-            lmstudioModels.forEach(m => {
-                html += `- ${m}<br>`;
-            });
-        }
-        
-        if (!html) {
-            html = 'Ollama: llama3, mistral | LM Studio: default';
-        }
-        
-        modelsDiv.innerHTML = html;
-    } catch (error) {
-        console.warn('Model display error, showing defaults');
-        document.getElementById('availableModels').innerHTML = '<strong>Ollama:</strong><br>- llama3<br>- mistral<br><br><strong>LM Studio:</strong><br>- default';
+    const saved = config[selectedServer]?.model;
+    if (saved && [...modelSelect.options].some(o => o.value === saved)) {
+        modelSelect.value = saved;
     }
 }
 
-// Refresh model dropdown for current server
+async function updateAvailableModelsDisplay() {
+    const modelsDiv = document.getElementById('availableModels');
+    if (!modelsDiv) return;
+
+    try {
+        const config = await aiService.getAIConfig();
+        const [ollamaModels, lmstudioModels] = await Promise.all([
+            aiService.fetchOllamaModels(aiService.serverBaseUrl(config, 'ollama')),
+            aiService.fetchLMStudioModels(aiService.serverBaseUrl(config, 'lmstudio'))
+        ]);
+
+        let html = '';
+        if (ollamaModels.length) {
+            html += '<strong>Ollama:</strong><br>' + ollamaModels.map(m => `- ${escapeHtml(m)}`).join('<br>') + '<br>';
+        }
+        if (lmstudioModels.length) {
+            html += '<strong>LM Studio:</strong><br>' + lmstudioModels.map(m => `- ${escapeHtml(m)}`).join('<br>');
+        }
+
+        modelsDiv.innerHTML = html || '<em>No AI servers detected on the configured ports.</em>';
+    } catch (error) {
+        console.warn('Model display error:', error.message);
+        modelsDiv.innerHTML = '<em>Unable to list models.</em>';
+    }
+}
+
 async function refreshModelSelectForServer() {
     const config = await aiService.getAIConfig();
     const models = await fetchAvailableModels(config);
-    await updateModelSelect(models);
+    await updateModelSelect(models, config);
 }
 
-// Initialize on popup load
 async function initPopup() {
-    await initConfig();
-    
-    // Check connection status and update lamp
-    await checkConnectionStatus();
-    
-    // Fetch available models and update dropdown
-    const config = await aiService.getAIConfig();
-    const models = await fetchAvailableModels(config);
-    await updateModelSelect(models);
-    
-    // Also update the available models display section
-    await updateAvailableModelsDisplay();
+    try {
+        await initConfig();
+        await checkConnectionStatus();
+        await refreshModelSelectForServer();
+        await updateAvailableModelsDisplay();
+    } catch (e) {
+        console.error("Popup init error:", e);
+    }
 }
 
 initPopup();
+
+if (refreshBtn) {
+    refreshBtn.addEventListener('click', async () => {
+        const ollamaLamp = document.getElementById('ollamaLamp');
+        const lmstudioLamp = document.getElementById('lmstudioLamp');
+        if (ollamaLamp) ollamaLamp.className = 'lamp-indicator lamp-yellow';
+        if (lmstudioLamp) lmstudioLamp.className = 'lamp-indicator lamp-yellow';
+
+        await checkConnectionStatus();
+        await refreshModelSelectForServer();
+        await updateAvailableModelsDisplay();
+    });
+}

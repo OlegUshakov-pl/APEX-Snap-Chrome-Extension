@@ -1,4 +1,4 @@
-// search.js - search page logic (search is handled by the FastAPI server)
+// index.js - search page logic (JSON comes from the FastAPI server)
 
 const DEFAULT_SERVER = "http://127.0.0.1:8000";
 
@@ -8,18 +8,13 @@ const resultsDiv = document.getElementById('results');
 const errorDiv = document.getElementById('searchError');
 const settingsBtn = document.getElementById('settingsBtn');
 
-// Read the configured server URL (saved by the settings page)
+// Reads the JSON server address saved on the settings page
 async function getServerUrl() {
     try {
         const result = await chrome.storage.sync.get(['server_url']);
-        const url = result.server_url;
+        const url = String(result.server_url || '').trim();
         if (url) {
-            // Normalization: ensure it starts with http and has no trailing slash
-            let normalized = url.trim();
-            if (!/^https?:\/\//i.test(normalized)) {
-                normalized = `http://${normalized}`;
-            }
-            return normalized.replace(/\/+$/, '');
+            return (/^https?:\/\//i.test(url) ? url : `http://${url}`).replace(/\/+$/, '');
         }
     } catch (e) {
         console.warn("Failed to read server_url from storage, using default", e);
@@ -27,27 +22,26 @@ async function getServerUrl() {
     return DEFAULT_SERVER;
 }
 
-// Runs the search on the FastAPI server
+// Runs the search on the FastAPI server: GET /api/search?q=...
 async function runSearch(query) {
     query = query.trim();
     if (!query) return;
 
     const serverUrl = await getServerUrl();
 
-    // Reset UI into the loading state
     resultsDiv.style.display = 'none';
     errorDiv.style.display = 'none';
     searchBar.classList.add('loading');
 
     try {
-        const response = await fetch(`${serverUrl}/api/search?query=${encodeURIComponent(query)}`);
+        const response = await fetch(`${serverUrl}/api/search?q=${encodeURIComponent(query)}`);
 
         if (!response.ok) {
             throw new Error(`Server responded with ${response.status}`);
         }
 
         const data = await response.json();
-        renderResults(data);
+        renderResults(data, serverUrl);
     } catch (error) {
         console.error("Search error:", error);
         resultsDiv.style.display = 'none';
@@ -59,22 +53,48 @@ async function runSearch(query) {
 }
 
 // Renders search results from the server response
-function renderResults(data) {
-    const results = Array.isArray(data) ? data : (data.results || []);
+function renderResults(data, serverUrl) {
+    const items = Array.isArray(data) ? data : (data.items || data.results || []);
 
-    if (!results.length) {
+    if (!items.length) {
         resultsDiv.innerHTML = '<div class="result-empty">No results found</div>';
-    } else {
-        resultsDiv.innerHTML = results.map(r => `
-            <div class="result-item">
-                <a class="result-title" href="${escapeHtml(r.url || '#')}" target="_blank" rel="noopener">${escapeHtml(r.title || r.url || 'Result')}</a>
-                <div class="result-url">${escapeHtml(r.url || '')}</div>
-                <div class="result-snippet">${escapeHtml(r.snippet || '')}</div>
-            </div>
-        `).join('');
+        resultsDiv.style.display = 'block';
+        return;
     }
 
+    resultsDiv.innerHTML = items.map(item => {
+        const meta = item.metadata && typeof item.metadata === 'object' ? item.metadata : {};
+        // /api/add-snapshot wraps payloads as metadata.apex
+        const inner = meta.apex && typeof meta.apex === 'object' ? meta.apex : meta;
+
+        const url = String(item.url || '');
+        const href = safeUrl(url);
+        const title = inner.title || inner.summary || url || 'Result';
+        const snippetParts = [];
+        if (inner.summary && inner.summary !== title) snippetParts.push(inner.summary);
+        if (Array.isArray(inner.tags) && inner.tags.length) snippetParts.push(inner.tags.join(', '));
+        const snippet = snippetParts.join(' — ');
+
+        return `
+            <div class="result-item">
+                <a class="result-title" href="${escapeHtml(href)}" target="_blank" rel="noopener">${escapeHtml(title)}</a>
+                <div class="result-url">${escapeHtml(url)}${item.type ? ` · ${escapeHtml(item.type)}` : ''}</div>
+                <div class="result-snippet">${escapeHtml(snippet)}</div>
+            </div>
+        `;
+    }).join('');
+
     resultsDiv.style.display = 'block';
+}
+
+// Only http(s) links are clickable
+function safeUrl(value) {
+    try {
+        const url = new URL(value);
+        return /^https?:$/.test(url.protocol) ? url.href : '#';
+    } catch (e) {
+        return '#';
+    }
 }
 
 // Escapes HTML to prevent markup injection from server data
@@ -100,30 +120,31 @@ if (settingsBtn) {
     });
 }
 
-// Menu logic
+// ---------- "+" dropdown menu ----------
 const menuBtn = document.getElementById('menuBtn');
-if (menuBtn) {
-    // Close menu on outside click
-    document.addEventListener('click', (e) => {
-        const container = document.getElementById('menuContainer');
-        if (!container || !container.classList.contains('visible')) return;
-        if (!menuBtn.contains(e.target) && !container.contains(e.target)) {
-            container.classList.remove('visible');
-            container.classList.add('hidden');
-        }
+const menuContainer = document.getElementById('menuContainer');
+const menuList = document.getElementById('menuList');
+
+function setMenuOpen(open) {
+    if (!menuContainer || !menuList) return;
+    menuContainer.classList.toggle('visible', open);
+    menuContainer.classList.toggle('hidden', !open);
+    menuList.classList.toggle('hidden', !open);
+}
+
+if (menuBtn && menuContainer && menuList) {
+    setMenuOpen(false); // hidden on load
+
+    menuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setMenuOpen(!menuContainer.classList.contains('visible'));
     });
 
-    // Toggle menu on button press (supports both click and keyboard)
-    menuBtn.addEventListener('click', (e) => {
-        e.stopPropagation(); // Prevent closing immediately
-        const container = document.getElementById('menuContainer');
-        if (container) {
-            const menuList = container.querySelector('.dropdown-menu');
-            if (menuList) {
-                container.classList.toggle('visible');
-                menuList.classList.toggle('hidden');
-            }
-            container.focus();
+    // Close the menu on outside click
+    document.addEventListener('click', (e) => {
+        if (!menuContainer.classList.contains('visible')) return;
+        if (!menuBtn.contains(e.target) && !menuContainer.contains(e.target)) {
+            setMenuOpen(false);
         }
     });
 
@@ -134,9 +155,10 @@ if (menuBtn) {
             menuBtn.click();
         }
     });
-}
 
-// Remove the old menu-item click handlers since links now navigate directly
+    // Close after navigating to a menu page
+    menuList.addEventListener('click', () => setMenuOpen(false));
+}
 
 // Focus the search field on load
 window.addEventListener('load', () => {
