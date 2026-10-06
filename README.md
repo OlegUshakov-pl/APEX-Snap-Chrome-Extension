@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # ApexScan - AI Search
 
 Браузерное расширение (Edge/Chrome, Manifest V3) со своей поисковой страницей. Ищет JSON-слепки на вашем FastAPI-сервере и отправляет на него новые слепки с AI-анализом (Ollama / LM Studio).
@@ -101,3 +102,7 @@ AI-анализ выполняется через Ollama (`POST /api/generate`) 
 - Для поиска нужен запущенный FastAPI-сервер с эндпоинтом `GET /api/search?q=`
 - Поисковая страница переопределяет новую вкладку (`chrome_url_overrides.newtab`)
 - AI-анализ работает, только если запущен Ollama или LM Studio на указанном порту
+=======
+# APEX-Snap-Edge-Extension
+APEX
+>>>>>>> c837dc8ae21d7f5f18150f342a2c7fad635ec788
