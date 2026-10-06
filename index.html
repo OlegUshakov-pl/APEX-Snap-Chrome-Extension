@@ -23,82 +23,6 @@
             overflow: hidden;
         }
 
-        /* Add "+" menu to the left */
-        #menuBtn {
-            position: fixed;
-            top: 16px;
-            left: 24px;
-            width: 36px;
-            height: 36px;
-            border: none;
-            background: transparent;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 30px;
-            color: #666;
-            z-index: 10;
-            transition: transform 0.3s ease, color 0.3s ease;
-        }
-
-        #menuBtn:hover {
-            color: #0078D4;
-        }
-
-        /* Dropdown menu for "+" button */
-        .dropdown-menu {
-            position: fixed;
-            top: 56px;
-            left:         24px;
-            width: 100px;
-            flex-direction: column;
-            z-index: 10;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .dropdown-menu.hidden {
-            display: none;
-        }
-
-        .menu-item {
-            padding: 10px 15px;
-            font-size: 16px;
-            color: #333;
-            text-decoration: none;
-            cursor: pointer;
-            line-height: 1.8;
-        }
-
-        .menu-item:last-child {
-            border-bottom: none;
-        }
-
-        .menu-item:hover {
-            font-weight: bold;
-        }
-
-        /* Smooth fade for dropdown */
-        .dropdown-container {
-            position: fixed;
-            top: 56px;
-            left: 24px;
-            width: 150px;
-            z-index: 100;
-            transition: opacity 0.3s ease;
-        }
-
-        .dropdown-container.visible {
-            opacity: 1;
-        }
-
-        .dropdown-container.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
         /* Centered search bar */
         .search-wrapper {
             flex: 1;
@@ -201,38 +125,11 @@
             text-align: center;
         }
 
-        /* Settings gear - top-right corner, no background */
-        .settings-btn {
-            position: fixed;
-            top: 16px;
-            right: 24px;
-            width: 40px;
-            height: 40px;
-            border: none;
-            background: transparent;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-        }
-
-        .settings-btn:hover {
-            transform: rotate(90deg);
-        }
-
-        .settings-btn svg {
-            width: 24px;
-            height: 24px;
-            color: #666;
-        }
-
-        /* Settings gear - no background, top-right corner */
+        /* Settings gear - top-left corner, no background */
         #settingsBtn {
             position: fixed;
             top: 16px;
-            right: 24px;
+            left: 24px;
             width: 40px;
             height: 40px;
             border: none;
@@ -254,30 +151,47 @@
             height: 24px;
             color: #666;
         }
+
+        /* Close button - top-right corner */
+        #closeBtn {
+            position: fixed;
+            top: 16px;
+            right: 24px;
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #666;
+            z-index: 10;
+            transition: color 0.3s ease;
+        }
+
+        #closeBtn:hover {
+            color: #dc3545;
+        }
     </style>
 </head>
 <body>
-    <!-- Menu "+" button on the left -->
-    <button id="menuBtn">+</button>
-    <div class="dropdown-container hidden" id="menuContainer">
-        <div class="dropdown-menu hidden" id="menuList">
-            <a href="new_file.html" class="menu-item">New File</a>
-            <a href="list_files.html" class="menu-item">File List</a>
-        </div>
-    </div>
-
-    <!-- Settings gear (opens settings page via index.js) -->
+    <!-- Settings gear (top-left, opens settings page via index.js) -->
     <a href="#"
          id="settingsBtn"
          title="Settings"
-         aria-label="Settings"
-         class="settings-btn">
+         aria-label="Settings">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"></circle>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
         </svg>
     </a>
+
+    <!-- Close button (top-right) -->
+    <button id="closeBtn" title="Close" aria-label="Close">&#10005;</button>
 
     <!-- Search bar -->
     <div class="search-wrapper">

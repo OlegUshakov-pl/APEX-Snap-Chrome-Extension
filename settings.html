@@ -47,7 +47,7 @@
             color: #444;
             margin: 12px 0 6px;
         }
-        input[type="text"], select {
+        input[type="text"] {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
@@ -74,67 +74,6 @@
             min-height: 18px;
             color: #444;
         }
-
-        .server-selection {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            margin: 12px 0;
-            flex-wrap: wrap;
-        }
-        .server-row {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .server-btn {
-            padding: 8px 15px;
-            font-size: 13px;
-            border: 1px solid #ccc;
-            background: white;
-            cursor: pointer;
-            color: #333;
-            margin: 7px 0;
-            box-shadow: 0px 2px 2px 0px rgba(0, 0, 0, 0.25);
-        }
-        .server-btn.active {
-            background: #4a90d9;
-            color: white;
-            border-color: #4a90d9;
-        }
-
-        .lamp-indicator {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            display: inline-block;
-            border: 1px solid #999;
-            transition: background-color 0.3s, box-shadow 0.3s;
-        }
-        .lamp-green { 
-            background-color: #28a745; 
-            box-shadow: 0 0 5px #28a745; 
-        }
-        .lamp-red { 
-            background-color: #dc3545; 
-            box-shadow: 0 0 5px #dc3545; 
-        }
-        .lamp-yellow { 
-            background-color: #ffc107; 
-            box-shadow: 0 0 5px #ffc107; 
-        }
-
-        .models-list {
-            font-size: 13px;
-            background: rgba(255, 255, 255, 0.5);
-            padding: 10px;
-            border: 1px solid #ccc;
-            margin-top: 10px;
-            max-height: 180px;
-            overflow: auto;
-            color: #444;
-        }
     </style>
 </head>
 <body>
@@ -151,51 +90,10 @@
             </div>
         </div>
 
-        <div class="config-section">
-            <div class="section-title">AI Server (for page analysis)</div>
-
-            <!-- 5. Layout: Ollama -> LM Studio -> Refresh -->
-            <div style="margin-bottom: 10px;">
-                <div class="server-row" style="align-items: center; gap: 4px;">
-                    <span class="lamp-indicator lamp-green" id="ollamaLamp"></span>
-                    <button id="ollamaBtn" class="server-btn active" data-port="11434">Ollama</button>
-                    <span class="install-status" id="ollamaStatus" style="font-size: 11px; color: #999;">Checking...</span>
-                </div>
-            </div>
-
-            <div style="margin-bottom: 10px;">
-                <div class="server-row" style="align-items: center; gap: 4px;">
-                    <span class="lamp-indicator lamp-red" id="lmstudioLamp"></span>
-                    <button id="lmstudioBtn" class="server-btn" data-port="1234">LM Studio</button>
-                    <span class="install-status" id="lmstudioStatus" style="font-size: 11px; color: #999;">Checking...</span>
-                </div>
-            </div>
-
-            <div style="margin-bottom: 10px;">
-                <button id="refreshBtn" class="server-btn" style="width: 100%;">Refresh Connection</button>
-            </div>
-
-            <label id="portLabel">Port (Ollama):</label>
-            <input type="text" id="ollamaPort" placeholder="11434 (Ollama)" value="11434">
-
-            <label id="lmstudioPortLabel" style="display:none;">Port (LM Studio):</label>
-            <input type="text" id="lmstudioPort" placeholder="1234 (LM Studio)" value="1234" style="display:none;">
-
-            <label id="modelLabel">Model Selection:</label>
-            <select id="modelSelect">
-                <option value="">Loading installed models...</option>
-            </select>
-
-            <div class="models-list" id="availableModels">
-                <em>Scanning for models...</em>
-            </div>
-        </div>
-
         <button id="saveBtn" class="save-btn">Save Settings</button>
         <div class="status" id="saveStatus"></div>
     </div>
 
-    <script src="ai-service.js"></script>
     <script src="settings.js"></script>
 </body>
 </html>

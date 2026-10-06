@@ -112,52 +112,18 @@ searchInput.addEventListener('keydown', (e) => {
     }
 });
 
-// Settings gear opens the settings page
+// Settings gear opens the settings page in a tab
 if (settingsBtn) {
     settingsBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        window.location.href = chrome.runtime.getURL('settings.html');
+        chrome.runtime.openOptionsPage();
     });
 }
 
-// ---------- "+" dropdown menu ----------
-const menuBtn = document.getElementById('menuBtn');
-const menuContainer = document.getElementById('menuContainer');
-const menuList = document.getElementById('menuList');
-
-function setMenuOpen(open) {
-    if (!menuContainer || !menuList) return;
-    menuContainer.classList.toggle('visible', open);
-    menuContainer.classList.toggle('hidden', !open);
-    menuList.classList.toggle('hidden', !open);
-}
-
-if (menuBtn && menuContainer && menuList) {
-    setMenuOpen(false); // hidden on load
-
-    menuBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        setMenuOpen(!menuContainer.classList.contains('visible'));
-    });
-
-    // Close the menu on outside click
-    document.addEventListener('click', (e) => {
-        if (!menuContainer.classList.contains('visible')) return;
-        if (!menuBtn.contains(e.target) && !menuContainer.contains(e.target)) {
-            setMenuOpen(false);
-        }
-    });
-
-    // Allow opening with Enter/Space when focused
-    menuBtn.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            menuBtn.click();
-        }
-    });
-
-    // Close after navigating to a menu page
-    menuList.addEventListener('click', () => setMenuOpen(false));
+// Close button closes the popup window
+const closeBtn = document.getElementById('closeBtn');
+if (closeBtn) {
+    closeBtn.addEventListener('click', () => window.close());
 }
 
 // Focus the search field on load
