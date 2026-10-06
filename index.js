@@ -120,10 +120,21 @@ if (settingsBtn) {
     });
 }
 
-// Close button closes the popup window
+// Close button closes the search tab
 const closeBtn = document.getElementById('closeBtn');
 if (closeBtn) {
-    closeBtn.addEventListener('click', () => window.close());
+    closeBtn.addEventListener('click', async () => {
+        try {
+            const tab = await chrome.tabs.getCurrent();
+            if (tab && tab.id != null) {
+                await chrome.tabs.remove(tab.id);
+                return;
+            }
+        } catch (e) {
+            console.warn("Failed to close tab:", e);
+        }
+        window.close();
+    });
 }
 
 // Focus the search field on load
