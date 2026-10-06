@@ -44,8 +44,19 @@ function syncUrl() {
 }
 
 // Runs the search on the FastAPI server: GET /api/search?q=...
+// Results are shown only for an actual query (the search page never lists everything).
 async function runSearch(query, offset = 0) {
     query = String(query || '').trim();
+    if (!query) {
+        currentQuery = '';
+        currentOffset = 0;
+        currentTotal = 0;
+        syncUrl();
+        resultsDiv.style.display = 'none';
+        paginationDiv.classList.remove('visible');
+        errorDiv.style.display = 'none';
+        return;
+    }
     currentQuery = query;
     currentOffset = offset;
     syncUrl();
@@ -258,10 +269,10 @@ if (closeBtn) {
     });
 }
 
-// Focus the search field on load and show the list (recent snapshots for an empty query)
+// Focus the search field on load; search runs only when returning from the viewer with ?q=
 window.addEventListener('load', () => {
     const q = new URLSearchParams(location.search).get('q') || '';
     searchInput.value = q;
     searchInput.focus();
-    runSearch(q, 0);
+    if (q) runSearch(q, 0);
 });
