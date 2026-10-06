@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ApexScan - Snapshot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            min-height: 100%;
+            font-family: "Segoe UI", sans-serif;
+        }
+
+        body {
+            background: linear-gradient(180deg, #d8d8ec 0%, #e6dcdd 60%, #f2dcd7 100%);
+            padding: 24px 16px 48px;
+        }
+
+        .page {
+            width: 900px;
+            max-width: 96%;
+            margin: 0 auto;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .back-link {
+            font-size: 14px;
+            color: #4a90d9;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        #snapId {
+            font-size: 12px;
+            color: #999;
+            word-break: break-all;
+            text-align: right;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.10);
+            padding: 22px 26px;
+            margin-bottom: 18px;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #333;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: #777;
+            margin-top: 8px;
+            word-break: break-all;
+        }
+
+        .subtitle a {
+            color: #28a745;
+            text-decoration: none;
+        }
+
+        .subtitle a:hover {
+            text-decoration: underline;
+        }
+
+        .badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .badge {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #f0f0f5;
+            color: #555;
+        }
+
+        .badge-type {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .badge-conf-high {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .badge-conf-mid {
+            background: #fef9c3;
+            color: #a16207;
+        }
+
+        .badge-conf-low {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .thumb {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 14px;
+            border: 1px solid #e5e0e6;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid #eee;
+            overflow-x: auto;
+            margin-bottom: 18px;
+        }
+
+        .tab-btn {
+            padding: 10px 16px;
+            font-size: 14px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: #777;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            color: #333;
+        }
+
+        .tab-btn.active {
+            color: #0078D4;
+            border-bottom-color: #0078D4;
+            font-weight: 600;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #999;
+            margin: 20px 0 8px;
+        }
+
+        .section-title:first-child {
+            margin-top: 0;
+        }
+
+        .summary-text {
+            color: #444;
+            line-height: 1.65;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+
+        .snap-section {
+            background: #f7f7fb;
+            border: 1px solid #ece9f0;
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+        }
+
+        .snap-section h4 {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .snap-section p {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .questions {
+            margin-left: 18px;
+            font-size: 14px;
+            color: #555;
+            line-height: 1.7;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            background: #f0f0f5;
+            color: #555;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 999px;
+        }
+
+        table.facts {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        table.facts th {
+            text-align: left;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #999;
+            background: #f7f7fb;
+            padding: 8px 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        table.facts td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #444;
+            vertical-align: top;
+        }
+
+        .quote {
+            color: #777;
+            font-style: italic;
+            max-width: 340px;
+        }
+
+        .claim {
+            max-width: 320px;
+        }
+
+        .pill {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+
+        .pill-ok {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .pill-warn {
+            background: #fef9c3;
+            color: #a16207;
+        }
+
+        .highlight {
+            background: #f7f7fb;
+            border: 1px solid #ece9f0;
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+        }
+
+        .highlight-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .highlight p {
+            font-style: italic;
+            color: #333;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .highlight .reason {
+            font-style: normal;
+            font-size: 12px;
+            color: #888;
+            margin-top: 6px;
+        }
+
+        .entity-group {
+            background: #f7f7fb;
+            border: 1px solid #ece9f0;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+        }
+
+        .entity-group h4 {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .entity-empty {
+            color: #aaa;
+            font-size: 13px;
+        }
+
+        .raw-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .raw-btn {
+            border: 1px solid #ccc;
+            background: white;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            color: #333;
+        }
+
+        .raw-btn:hover {
+            border-color: #0078D4;
+            color: #0078D4;
+        }
+
+        #copyMsg {
+            font-size: 12px;
+            color: #28a745;
+        }
+
+        pre.raw {
+            background: #f7f7fb;
+            border: 1px solid #ece9f0;
+            border-radius: 8px;
+            padding: 16px;
+            font-size: 12px;
+            line-height: 1.5;
+            max-height: 60vh;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: #444;
+        }
+
+        .status {
+            padding: 48px 0;
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+        }
+
+        .status.error {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="topbar">
+            <a href="#" id="backBtn" class="back-link">&larr; Back to search</a>
+            <span id="snapId"></span>
+        </div>
+
+        <div id="status" class="status">Loading snapshot&hellip;</div>
+
+        <div id="content" style="display:none;">
+            <div class="card">
+                <h1 id="title"></h1>
+                <div class="subtitle" id="subtitle"></div>
+                <div class="badges" id="badges"></div>
+                <img id="thumb" class="thumb" alt="Snapshot thumbnail" style="display:none;">
+            </div>
+
+            <div class="card">
+                <div class="tabs" id="tabs"></div>
+                <div id="panels"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="viewer.js"></script>
+</body>
+</html>

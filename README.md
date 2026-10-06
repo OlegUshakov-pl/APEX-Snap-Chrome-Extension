@@ -19,6 +19,7 @@
 |------|------------|
 | `manifest.json` | Конфигурация Manifest V3, разрешения, content script |
 | `index.html` / `index.js` | Поисковая страница (открывается в новой вкладке по клику на иконку) |
+| `viewer.html` / `viewer.js` | Просмотр одного слепка (`GET /api/snaps/{id}`): Summary, Facts, Highlights, Entities, Raw JSON |
 | `settings.html` / `settings.js` | Настройки: **Server URL** |
 | `background.js` | Service worker: запись Server URL по умолчанию при установке |
 | `ai-service.js`, `content.js` | Заготовки (сейчас не используются) |
@@ -32,8 +33,9 @@
 
 ### Поиск:
 1. Нажмите иконку расширения — страница откроется в новой вкладке
-2. Введите запрос и нажмите Enter — результаты придут с сервера в формате JSON
-3. Крестик в правом верхнем углу закрывает вкладку поиска
+2. Введите запрос и нажмите Enter — лист слепков приходит с сервера в формате JSON (заголовок, ссылка, дата, теги, confidence)
+3. Клик по карточке открывает страницу просмотра слепка (кнопка «← Back to search» возвращает к поиску)
+4. Крестик в правом верхнем углу закрывает вкладку поиска
 
 ## 🌐 Сервер
 
@@ -41,7 +43,8 @@
 
 | Тип | Endpoint |
 |-----|----------|
-| Поиск | `GET /api/search?q=...` → `{ "total", "limit", "offset", "items": [{ "id", "type", "url", "created_at", "metadata" }] }` |
+| Поиск | `GET /api/search?q=...` → `{ "total", "limit", "offset", "items": [{ "id", "type", "url", "created_at", "snippet" }] }` |
+| Слепок по id | `GET /api/snaps/{snap_id}` → полный JSON слепка (`metadata.apex` для слепков ApexShot) |
 
 ### Запуск сервера:
 ```bash
