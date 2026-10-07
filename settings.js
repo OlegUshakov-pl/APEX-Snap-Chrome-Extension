@@ -6,12 +6,16 @@ const saveStatus = document.getElementById('saveStatus');
 const testBtn = document.getElementById('testBtn');
 const testStatus = document.getElementById('testStatus');
 
-// "127.0.0.1:8000" -> "http://127.0.0.1:8000"
+// "127.0.0.1:8000" -> "http://127.0.0.1:8000"; path/query are dropped
 function normalizeServerUrl(value) {
-    let url = String(value || '').trim().replace(/\/+$/, '');
+    let url = String(value || '').trim();
     if (!url) return 'http://127.0.0.1:8000';
     if (!/^https?:\/\//i.test(url)) url = `http://${url}`;
-    return url;
+    try {
+        return new URL(url).origin;
+    } catch (e) {
+        return 'http://127.0.0.1:8000';
+    }
 }
 
 function resetTestStatus() {
@@ -68,7 +72,7 @@ saveBtn.addEventListener('click', async () => {
 window.addEventListener('load', async () => {
     try {
         const result = await chrome.storage.sync.get(['server_url']);
-        fastapiUrlInput.value = result.server_url || 'http://127.0.0.1:8000';
+        fastapiUrlInput.value = normalizeServerUrl(result.server_url || '');
         saveStatus.textContent = 'Settings loaded';
     } catch (e) {
         console.error('Settings load error:', e);

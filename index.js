@@ -18,12 +18,21 @@ let currentOffset = 0;
 let currentTotal = 0;
 
 // Reads the JSON server address saved on the settings page
+function toOrigin(value) {
+    let url = /^https?:\/\//i.test(value) ? value : `http://${value}`;
+    try {
+        return new URL(url).origin;
+    } catch (e) {
+        return DEFAULT_SERVER;
+    }
+}
+
 async function getServerUrl() {
     try {
         const result = await chrome.storage.sync.get(['server_url']);
         const url = String(result.server_url || '').trim();
         if (url) {
-            return (/^https?:\/\//i.test(url) ? url : `http://${url}`).replace(/\/+$/, '');
+            return toOrigin(url);
         }
     } catch (e) {
         console.warn("Failed to read server_url from storage, using default", e);
