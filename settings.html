@@ -74,6 +74,47 @@
             min-height: 18px;
             color: #444;
         }
+
+        .test-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .test-btn {
+            padding: 9px 18px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            background: white;
+            cursor: pointer;
+            color: #333;
+            box-shadow: 0px 2px 2px 0px rgba(0, 0, 0, 0.25);
+        }
+
+        .test-btn:hover:not(:disabled) {
+            border-color: #4a90d9;
+            color: #4a90d9;
+        }
+
+        .test-btn:disabled {
+            opacity: 0.6;
+            cursor: default;
+        }
+
+        .test-status {
+            font-size: 14px;
+            min-height: 18px;
+        }
+
+        .test-status.ok {
+            color: #28a745;
+        }
+
+        .test-status.fail {
+            color: #dc3545;
+        }
     </style>
 </head>
 <body>
@@ -88,6 +129,11 @@
             <div class="status" style="text-align:left;">
                 Search queries and snapshots are sent to this address (<em>GET /api/search?q=</em>, <em>POST /api/add-snap</em>).
             </div>
+        </div>
+
+        <div class="test-row">
+            <button id="testBtn" class="test-btn">Test connection</button>
+            <span id="testStatus" class="test-status"></span>
         </div>
 
         <button id="saveBtn" class="save-btn">Save Settings</button>

@@ -47,6 +47,32 @@ function safeUrl(value) {
     }
 }
 
+function asArray(value) {
+    return Array.isArray(value) ? value : [];
+}
+
+/**
+ * Flattens any snapshot metadata shape into one object.
+ * Server_Apex stores: {"apex": {...}} (/api/add-snapshot) or {"metadata_ai": {...}}
+ * (/api/add-snap), sometimes a flat object, occasionally as a JSON string.
+ */
+function normalizeSnap(row) {
+    let meta = row && row.metadata;
+    if (typeof meta === 'string') {
+        try { meta = JSON.parse(meta); } catch (e) { meta = null; }
+    }
+    if (!meta || typeof meta !== 'object' || Array.isArray(meta)) meta = {};
+
+    let inner = meta;
+    if (meta.apex && typeof meta.apex === 'object' && !Array.isArray(meta.apex)) {
+        inner = meta.apex;
+    } else if (meta.metadata_ai && typeof meta.metadata_ai === 'object' && !Array.isArray(meta.metadata_ai)) {
+        inner = meta.metadata_ai;
+    }
+
+    return Object.assign({}, meta, inner);
+}
+
 function badge(text, cls) {
     return `<span class="badge${cls ? ' ' + cls : ''}">${escapeHtml(text)}</span>`;
 }
@@ -73,25 +99,25 @@ async function load() {
 }
 
 function render(row) {
-    const meta = row.metadata && typeof row.metadata === 'object' ? row.metadata : {};
-    const apex = meta.apex && typeof meta.apex === 'object' ? meta.apex : null;
+    const data = normalizeSnap(row);
 
-    const title = (apex && apex.title) || meta.summary || row.url || row.id;
-    const summary = (apex && apex.summary) || meta.summary || '';
-    const sections = Array.isArray(apex && apex.sections) ? apex.sections : [];
-    const questions = Array.isArray(apex && apex.questions) ? apex.questions : [];
-    const facts = Array.isArray(apex && apex.facts) ? apex.facts : [];
-    const highlights = Array.isArray(apex && apex.highlights) ? apex.highlights : [];
-    const entities = apex && apex.entities && typeof apex.entities === 'object' ? apex.entities : {};
-    const tags = (apex && Array.isArray(apex.tags) && apex.tags.length)
-        ? apex.tags
-        : (Array.isArray(meta.tags) ? meta.tags : []);
-    const confidence = apex && typeof apex.confidence === 'number' ? apex.confidence : null;
+    const sections = asArray(data.sections);
+    const questions = asArray(data.questions);
+    const facts = asArray(data.facts);
+    const highlights = asArray(data.highlights);
+    const entities = data.entities && typeof data.entities === 'object' && !Array.isArray(data.entities)
+        ? data.entities : {};
+    const tags = asArray(data.tags);
+    const confidence = typeof data.confidence === 'number' ? data.confidence : null;
+    const searchSnippet = String(row.search_text || '').replace(/\s+/g, ' ').trim();
+
+    const title = data.title || data.summary || searchSnippet.slice(0, 140) || row.url || row.id || snapId;
+    const summary = data.summary || searchSnippet.slice(0, 900) || '';
 
     // ---- header ----
     document.getElementById('title').textContent = title;
 
-    const srcUrl = safeUrl(row.url || (apex && apex.source_url) || '');
+    const srcUrl = safeUrl(row.url || data.source_url || '');
     const subtitle = document.getElementById('subtitle');
     const subtitleParts = [];
     if (srcUrl !== '#') {
@@ -104,16 +130,16 @@ function render(row) {
 
     const badges = [];
     if (row.type) badges.push(badge(row.type, 'badge-type'));
-    if (apex && (apex.provider || apex.model)) {
-        badges.push(badge([apex.provider, apex.model].filter(Boolean).join(' / ')));
+    if (data.provider || data.model) {
+        badges.push(badge([data.provider, data.model].filter(Boolean).join(' / ')));
     }
-    if (apex && apex.template_name) badges.push(badge(apex.template_name));
+    if (data.template_name) badges.push(badge(data.template_name));
     if (confidence !== null && !isNaN(confidence)) {
         const pct = Math.round(Math.min(1, Math.max(0, confidence)) * 100);
         const cls = pct >= 75 ? 'badge-conf-high' : (pct >= 50 ? 'badge-conf-mid' : 'badge-conf-low');
         badges.push(badge(`confidence ${confidence.toFixed(2)}`, cls));
     }
-    if (meta.category) badges.push(badge(meta.category));
+    if (data.category) badges.push(badge(data.category));
     document.getElementById('badges').innerHTML = badges.join('');
 
     const thumb = document.getElementById('thumb');
@@ -122,7 +148,7 @@ function render(row) {
         thumb.style.display = 'block';
     }
 
-    // ---- tabs ----
+    // ---- tabs (only sections that actually have data) ----
     const tabs = [{ key: 'overview', label: 'Overview' }];
     if (facts.length) tabs.push({ key: 'facts', label: `Facts (${facts.length})` });
     if (highlights.length) tabs.push({ key: 'highlights', label: `Highlights (${highlights.length})` });
@@ -132,7 +158,7 @@ function render(row) {
     rawText = JSON.stringify(row, null, 2);
 
     const panels = {
-        overview: overviewHtml(summary, sections, questions, tags),
+        overview: overviewHtml(summary, sections, questions, tags, row),
         facts: factsHtml(facts),
         highlights: highlightsHtml(highlights),
         entities: entitiesHtml(entities),
@@ -161,18 +187,21 @@ function render(row) {
     contentEl.style.display = 'block';
 }
 
-function overviewHtml(summary, sections, questions, tags) {
+function overviewHtml(summary, sections, questions, tags, row) {
     const parts = [];
     parts.push('<div class="section-title">Summary</div>');
     parts.push(summary
         ? `<p class="summary-text">${escapeHtml(summary)}</p>`
-        : '<p class="summary-text">—</p>');
+        : `<p class="summary-text">No summary. <span style="color:#999;">${escapeHtml(String(row.url || row.id || ''))}</span></p>`);
 
     if (sections.length) {
         parts.push('<div class="section-title">Sections</div>');
         sections.forEach(s => {
             const sec = s && typeof s === 'object' ? s : {};
-            parts.push(`<div class="snap-section"><h4>${escapeHtml(sec.heading || '')}</h4><p>${escapeHtml(sec.text || '')}</p></div>`);
+            const head = sec.heading || sec.title || '';
+            const body = sec.text || sec.content || '';
+            if (!head && !body) return;
+            parts.push(`<div class="snap-section">${head ? `<h4>${escapeHtml(head)}</h4>` : ''}<p>${escapeHtml(body)}</p></div>`);
         });
     }
 
@@ -201,8 +230,8 @@ function factsHtml(facts) {
             : '<span class="pill pill-warn">unverified</span>';
         const quality = fact.quality === 'low_quality' ? ' <span class="pill pill-warn">low quality</span>' : '';
         return `<tr>
-            <td class="claim">${escapeHtml(fact.claim || '')}</td>
-            <td class="quote">${escapeHtml(fact.quote || '')}</td>
+            <td class="claim">${escapeHtml(fact.claim || fact.statement || '')}</td>
+            <td class="quote">${escapeHtml(fact.quote || fact.evidence || '')}</td>
             <td>${conf}</td>
             <td>${escapeHtml(fact.type || '')}</td>
             <td>${status}${quality}</td>
@@ -223,7 +252,7 @@ function highlightsHtml(highlights) {
             : '<span class="pill pill-warn">unverified</span>';
         return `<div class="highlight">
             <div class="highlight-head">
-                <p>&laquo;${escapeHtml(item.quote || '')}&raquo;</p>
+                <p>&laquo;${escapeHtml(item.quote || item.text || '')}&raquo;</p>
                 ${status}
             </div>
             ${item.reason ? `<div class="reason">${escapeHtml(item.reason)}</div>` : ''}
@@ -233,7 +262,7 @@ function highlightsHtml(highlights) {
 
 function entitiesHtml(entities) {
     return Object.keys(entities).map(key => {
-        const list = Array.isArray(entities[key]) ? entities[key] : [];
+        const list = asArray(entities[key]);
         const body = list.length
             ? `<div class="tag-list">${list.map(v => `<span class="tag">${escapeHtml(v)}</span>`).join('')}</div>`
             : '<span class="entity-empty">—</span>';

@@ -89,7 +89,8 @@ async function runSearch(query, offset = 0) {
     }
 }
 
-// Full snapshot row (title, summary, tags) for one search item
+// Full snapshot row (title, summary, tags) for one search item.
+// /api/search already returns metadata inline, so we only fetch when it is missing.
 async function fetchSnap(serverUrl, id) {
     try {
         const response = await fetch(`${serverUrl}/api/snaps/${encodeURIComponent(id)}`);
@@ -98,6 +99,32 @@ async function fetchSnap(serverUrl, id) {
     } catch (e) {
         return null;
     }
+}
+
+function asArray(value) {
+    return Array.isArray(value) ? value : [];
+}
+
+/**
+ * Flattens any snapshot metadata shape into one object.
+ * Server_Apex stores: {"apex": {...}} (/api/add-snapshot), {"metadata_ai": {...}}
+ * (/api/add-snap), a flat object, or occasionally a JSON string.
+ */
+function normalizeSnap(row) {
+    let meta = row && row.metadata;
+    if (typeof meta === 'string') {
+        try { meta = JSON.parse(meta); } catch (e) { meta = null; }
+    }
+    if (!meta || typeof meta !== 'object' || Array.isArray(meta)) meta = {};
+
+    let inner = meta;
+    if (meta.apex && typeof meta.apex === 'object' && !Array.isArray(meta.apex)) {
+        inner = meta.apex;
+    } else if (meta.metadata_ai && typeof meta.metadata_ai === 'object' && !Array.isArray(meta.metadata_ai)) {
+        inner = meta.metadata_ai;
+    }
+
+    return Object.assign({}, meta, inner);
 }
 
 // Renders search results from the server response
@@ -112,9 +139,12 @@ async function renderResults(data, serverUrl) {
         return;
     }
 
-    const snaps = await Promise.all(items.map(item => fetchSnap(serverUrl, item.id)));
+    // Reuse inline metadata from /api/search; fetch the full row only when absent
+    const rows = await Promise.all(items.map(item =>
+        item.metadata ? item : fetchSnap(serverUrl, item.id)
+    ));
 
-    resultsDiv.innerHTML = items.map((item, i) => renderCard(item, snaps[i])).join('');
+    resultsDiv.innerHTML = items.map((item, i) => renderCard(item, rows[i])).join('');
     resultsDiv.style.display = 'block';
 
     // Pagination controls
@@ -140,18 +170,19 @@ function openSnap(id) {
     location.href = `viewer.html?${params.toString()}`;
 }
 
-function renderCard(item, snap) {
-    const meta = snap && snap.metadata && typeof snap.metadata === 'object' ? snap.metadata : {};
-    const apex = meta.apex && typeof meta.apex === 'object' ? meta.apex : null;
+function renderCard(item, row) {
+    const data = normalizeSnap(row || item);
 
-    const rawTitle = (apex && apex.title) || meta.summary || item.snippet || item.url || 'Snapshot';
+    const searchSnippet = String(item.snippet || (row && row.search_text) || '').replace(/\s+/g, ' ').trim();
+    const rawTitle = data.title || data.summary || searchSnippet || item.url || 'Snapshot';
     const title = truncate(rawTitle, 140);
-    let summary = (apex && apex.summary) || meta.summary || item.snippet || '';
+
+    let summary = data.summary || searchSnippet || '';
     if (summary === rawTitle) summary = '';
 
-    const tags = pickTags(apex, meta);
-    const confidence = apex && typeof apex.confidence === 'number' ? apex.confidence : null;
-    const href = safeUrl(item.url || (apex && apex.source_url) || '');
+    const tags = asArray(data.tags).filter(t => typeof t === 'string' && t.trim()).slice(0, 8);
+    const confidence = typeof data.confidence === 'number' ? data.confidence : null;
+    const href = safeUrl(item.url || data.source_url || '');
     const viewerHref = `viewer.html?id=${encodeURIComponent(item.id)}${currentQuery ? `&q=${encodeURIComponent(currentQuery)}` : ''}`;
 
     const parts = [];
@@ -194,11 +225,6 @@ function confidenceHtml(value) {
         <div class="confidence-track"><div class="confidence-fill ${cls}" style="width:${pct}%"></div></div>
         <span class="confidence-value">${value.toFixed(2)}</span>
     </div>`;
-}
-
-function pickTags(apex, meta) {
-    let tags = apex && Array.isArray(apex.tags) ? apex.tags : (Array.isArray(meta.tags) ? meta.tags : []);
-    return tags.filter(t => typeof t === 'string' && t.trim()).slice(0, 8);
 }
 
 function truncate(str, n) {
