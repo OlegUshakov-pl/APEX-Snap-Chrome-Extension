@@ -109,6 +109,7 @@ function asArray(value) {
  * Flattens any snapshot metadata shape into one object.
  * Server_Apex stores: {"apex": {...}} (/api/add-snapshot), {"metadata_ai": {...}}
  * (/api/add-snap), a flat object, or occasionally a JSON string.
+ * Unwraps recursively (apex.apex...), so double-wrapped snapshots still work.
  */
 function normalizeSnap(row) {
     let meta = row && row.metadata;
@@ -118,13 +119,43 @@ function normalizeSnap(row) {
     if (!meta || typeof meta !== 'object' || Array.isArray(meta)) meta = {};
 
     let inner = meta;
-    if (meta.apex && typeof meta.apex === 'object' && !Array.isArray(meta.apex)) {
-        inner = meta.apex;
-    } else if (meta.metadata_ai && typeof meta.metadata_ai === 'object' && !Array.isArray(meta.metadata_ai)) {
-        inner = meta.metadata_ai;
+    for (let depth = 0; depth < 4; depth++) {
+        if (inner && typeof inner === 'object' && !Array.isArray(inner)) {
+            if (inner.apex && typeof inner.apex === 'object' && !Array.isArray(inner.apex)) {
+                inner = inner.apex;
+                continue;
+            }
+            if (inner.metadata_ai && typeof inner.metadata_ai === 'object' && !Array.isArray(inner.metadata_ai)) {
+                inner = inner.metadata_ai;
+                continue;
+            }
+            if (inner.metadata && typeof inner.metadata === 'object' && !Array.isArray(inner.metadata)) {
+                inner = inner.metadata;
+                continue;
+            }
+        }
+        break;
     }
 
-    return Object.assign({}, meta, inner);
+    const flat = Object.assign({}, meta, inner);
+    if (row && typeof row === 'object') {
+        for (const k of ['title', 'summary', 'overview', 'description', 'search_text']) {
+            if (flat[k] == null && row[k] != null) flat[k] = row[k];
+        }
+    }
+    return flat;
+}
+
+function pickText(data, keys, minLen) {
+    minLen = minLen || 15;
+    for (const k of keys) {
+        const v = data && data[k];
+        if (typeof v === 'string') {
+            const s = v.replace(/\s+/g, ' ').trim();
+            if (s.length >= minLen) return s;
+        }
+    }
+    return '';
 }
 
 // Renders search results from the server response
@@ -173,11 +204,12 @@ function openSnap(id) {
 function renderCard(item, row) {
     const data = normalizeSnap(row || item);
 
-    const searchSnippet = String(item.snippet || (row && row.search_text) || '').replace(/\s+/g, ' ').trim();
-    const rawTitle = data.title || data.summary || searchSnippet || item.url || 'Snapshot';
+    const searchSnippet = String(item.snippet || (row && (row.search_text || row.snippet)) || '').replace(/\s+/g, ' ').trim();
+    const rawTitle = pickText(data, ['title', 'summary', 'overview', 'description'], 3)
+        || searchSnippet || item.url || 'Snapshot';
     const title = truncate(rawTitle, 140);
 
-    let summary = data.summary || searchSnippet || '';
+    let summary = pickText(data, ['summary', 'overview', 'description', 'content', 'text'], 15) || searchSnippet || '';
     if (summary === rawTitle) summary = '';
 
     const tags = asArray(data.tags).filter(t => typeof t === 'string' && t.trim()).slice(0, 8);

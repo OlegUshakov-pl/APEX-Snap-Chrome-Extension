@@ -55,6 +55,7 @@ function asArray(value) {
  * Flattens any snapshot metadata shape into one object.
  * Server_Apex stores: {"apex": {...}} (/api/add-snapshot) or {"metadata_ai": {...}}
  * (/api/add-snap), sometimes a flat object, occasionally as a JSON string.
+ * Unwraps recursively (apex.apex...), so double-wrapped snapshots still work.
  */
 function normalizeSnap(row) {
     let meta = row && row.metadata;
@@ -63,14 +64,47 @@ function normalizeSnap(row) {
     }
     if (!meta || typeof meta !== 'object' || Array.isArray(meta)) meta = {};
 
+    // Peel nested wrappers: {apex: {apex: {...}}}, {metadata_ai: {...}}, {metadata: {...}}
     let inner = meta;
-    if (meta.apex && typeof meta.apex === 'object' && !Array.isArray(meta.apex)) {
-        inner = meta.apex;
-    } else if (meta.metadata_ai && typeof meta.metadata_ai === 'object' && !Array.isArray(meta.metadata_ai)) {
-        inner = meta.metadata_ai;
+    for (let depth = 0; depth < 4; depth++) {
+        if (inner && typeof inner === 'object' && !Array.isArray(inner)) {
+            if (inner.apex && typeof inner.apex === 'object' && !Array.isArray(inner.apex)) {
+                inner = inner.apex;
+                continue;
+            }
+            if (inner.metadata_ai && typeof inner.metadata_ai === 'object' && !Array.isArray(inner.metadata_ai)) {
+                inner = inner.metadata_ai;
+                continue;
+            }
+            if (inner.metadata && typeof inner.metadata === 'object' && !Array.isArray(inner.metadata)) {
+                inner = inner.metadata;
+                continue;
+            }
+        }
+        break;
     }
 
-    return Object.assign({}, meta, inner);
+    const flat = Object.assign({}, meta, inner);
+    // Top-level row fields (url, search_text...) are also useful fallbacks
+    if (row && typeof row === 'object') {
+        for (const k of ['title', 'summary', 'overview', 'description', 'search_text']) {
+            if (flat[k] == null && row[k] != null) flat[k] = row[k];
+        }
+    }
+    return flat;
+}
+
+// First non-empty string among candidate keys; ignores junk like "s" (len < minLen).
+function pickText(data, keys, minLen) {
+    minLen = minLen || 15;
+    for (const k of keys) {
+        const v = data && data[k];
+        if (typeof v === 'string') {
+            const s = v.replace(/\s+/g, ' ').trim();
+            if (s.length >= minLen) return s;
+        }
+    }
+    return '';
 }
 
 function badge(text, cls) {
@@ -109,10 +143,22 @@ function render(row) {
         ? data.entities : {};
     const tags = asArray(data.tags);
     const confidence = typeof data.confidence === 'number' ? data.confidence : null;
-    const searchSnippet = String(row.search_text || '').replace(/\s+/g, ' ').trim();
+    const searchSnippet = String(row.search_text || row.snippet || '').replace(/\s+/g, ' ').trim();
 
-    const title = data.title || data.summary || searchSnippet.slice(0, 140) || row.url || row.id || snapId;
-    const summary = data.summary || searchSnippet.slice(0, 900) || '';
+    // Title: any reasonable field, even short ones
+    const title = pickText(data, ['title', 'summary', 'overview', 'description'], 3)
+        || searchSnippet.slice(0, 140) || row.url || data.source_url || row.id || snapId;
+    // Summary: ignore junk one-letter summaries like "s", fall back to sections/search_text
+    let summary = pickText(data, ['summary', 'overview', 'description', 'content', 'text', 'search_text'], 15);
+    if (!summary && searchSnippet.length >= 15) summary = searchSnippet.slice(0, 900);
+    if (!summary && sections.length) {
+        const firstSec = sections.map(s => {
+            const sec = s && typeof s === 'object' ? s : {};
+            return String(sec.text || sec.content || '').replace(/\s+/g, ' ').trim();
+        }).find(t => t.length >= 15);
+        if (firstSec) summary = firstSec.slice(0, 900);
+    }
+    if (!summary && searchSnippet) summary = searchSnippet.slice(0, 900);
 
     // ---- header ----
     document.getElementById('title').textContent = title;
