@@ -1,84 +1,84 @@
 # ApexScan - AI Search
 
-Браузерное расширение (Edge/Chrome, Manifest V3) со своей поисковой страницей. Ищет JSON-слепки на вашем FastAPI-сервере.
+A browser extension (Edge/Chrome, Manifest V3) with its own search page. It searches JSON snapshots on your FastAPI server.
 
-## 📋 Описание
+## 📋 Description
 
-Поисковая страница «Search on ApexScan» открывается в новой вкладке только при нажатии на иконку расширения. Поиск выполняет FastAPI-сервер по адресу, указанному в настройках (**Server URL**). Шестерёнка в левом верхнем углу открывает страницу настроек, крестик в правом верхнем — закрывает вкладку поиска.
+The «Search on ApexScan» page opens in a new tab only when the extension icon is clicked. The search is performed by a FastAPI server at the address specified in the settings (**Server URL**). The gear in the top-left corner opens the settings page, and the cross in the top-right closes the search tab.
 
-## 🚀 Установка
+## 🚀 Installation
 
-1. Откройте `edge://extensions` (или `chrome://extensions`)
-2. Включите «Режим разработчика»
-3. Нажмите «Загрузить папку расширения» и выберите папку проекта
-4. Нажмите иконку расширения — поисковая страница ApexScan откроется в новой вкладке
+1. Open `edge://extensions` (or `chrome://extensions`)
+2. Enable «Developer mode»
+3. Click «Load unpacked extension» and select the project folder
+4. Click the extension icon — the ApexScan search page will open in a new tab
 
-## 📁 Структура проекта
+## 📁 Project Structure
 
-| Файл | Назначение |
-|------|------------|
-| `manifest.json` | Конфигурация Manifest V3, разрешения, content script |
-| `index.html` / `index.js` | Поисковая страница (открывается в новой вкладке по клику на иконку) |
-| `viewer.html` / `viewer.js` | Просмотр одного слепка (`GET /api/snaps/{id}`): Summary, Facts, Highlights, Entities, Raw JSON |
-| `settings.html` / `settings.js` | Настройки: **Server URL** |
-| `background.js` | Service worker: запись Server URL по умолчанию при установке |
-| `ai-service.js`, `content.js` | Заготовки (сейчас не используются) |
-| `new_file.html`, `list_files.html` | Заготовки страниц (сейчас не используются) |
+| File | Purpose |
+|------|---------|
+| `manifest.json` | Manifest V3 configuration, permissions, content script |
+| `index.html` / `index.js` | Search page (opens in a new tab when the icon is clicked) |
+| `viewer.html` / `viewer.js` | Viewing a single snapshot (`GET /api/snaps/{id}`): Summary, Facts, Highlights, Entities, Raw JSON |
+| `settings.html` / `settings.js` | Settings: **Server URL** |
+| `background.js` | Service worker: saves the default Server URL on install |
+| `ai-service.js`, `content.js` | Placeholder files (currently unused) |
+| `new_file.html`, `list_files.html` | Placeholder pages (currently unused) |
 
-## 🔧 Как использовать
+## 🔧 How to Use
 
-### Настройки (шестерёнка в левом верхнем углу):
-1. **Server URL** — адрес JSON-сервера, например `http://127.0.0.1:8000`
-2. Нажмите **Save Settings**
+### Settings (gear in the top-left corner):
+1. **Server URL** — the address of the JSON server, e.g. `http://127.0.0.1:8000`
+2. Click **Save Settings**
 
-### Поиск:
-1. Нажмите иконку расширения — страница откроется в новой вкладке
-2. Введите запрос и нажмите Enter — лист слепков приходит с сервера в формате JSON (заголовок, ссылка, дата, теги, confidence)
-3. Клик по карточке открывает страницу просмотра слепка (кнопка «← Back to search» возвращает к поиску)
-4. Крестик в правом верхнем углу закрывает вкладку поиска
+### Search:
+1. Click the extension icon — the page will open in a new tab
+2. Enter a query and press Enter — the list of snapshots arrives from the server in JSON format (title, link, date, tags, confidence)
+3. Clicking a card opens the snapshot viewer page (the «← Back to search» button returns to the search)
+4. The cross in the top-right corner closes the search tab
 
-## 🌐 Сервер
+## 🌐 Server
 
-Расширение обращается к FastAPI-серверу (по умолчанию `http://127.0.0.1:8000`, меняется в настройках):
+The extension talks to a FastAPI server (default `http://127.0.0.1:8000`, changeable in settings):
 
-| Тип | Endpoint |
-|-----|----------|
-| Поиск | `GET /api/search?q=...` → `{ "total", "limit", "offset", "items": [{ "id", "type", "url", "created_at", "snippet" }] }` |
-| Слепок по id | `GET /api/snaps/{snap_id}` → полный JSON слепка (`metadata.apex` для слепков ApexShot) |
+| Type | Endpoint |
+|------|----------|
+| Search | `GET /api/search?q=...` → `{ "total", "limit", "offset", "items": [{ "id", "type", "url", "created_at", "snippet" }] }` |
+| Snapshot by id | `GET /api/snaps/{snap_id}` → full snapshot JSON (`metadata.apex` for ApexShot snapshots) |
 
-### Запуск сервера:
+### Running the server:
 ```bash
 cd ../Server_Apex
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Проверка работы:
-Откройте `http://127.0.0.1:8000/status` — страница состояния сервера.
+### Checking that it works:
+Open `http://127.0.0.1:8000/status` — the server status page.
 
 ## 🔑 Permissions
 
-| Permission | Назначение |
-|------------|------------|
-| `activeTab` | Доступ к активной вкладке |
-| `scripting` | Дозагрузка content-скрипта, если его ещё нет на странице |
-| `tabs` | Запрос данных активной вкладки |
-| `storage` | Хранение Server URL |
-| `host_permissions` (`<all_urls>`) | Запросы к локальному серверу на localhost |
+| Permission | Purpose |
+|------------|---------|
+| `activeTab` | Access to the active tab |
+| `scripting` | Injecting the content script if it is not already on the page |
+| `tabs` | Querying data of the active tab |
+| `storage` | Storing the Server URL |
+| `host_permissions` (`<all_urls>`) | Requests to the local localhost server |
 
-## 🧩 Архитектура
+## 🧩 Architecture
 
 ```mermaid
 graph TD
     A[Index page] -->|GET /api/search?q=| B[FastAPI Server]
     B --> C[JSON results]
-    A -->|шестерёнка| D[Settings page]
+    A -->|gear| D[Settings page]
     D -->|Server URL| E[chrome.storage.sync]
 ```
 
-## 📅 Версия
+## 📅 Version
 
-`1.1` — Поисковая страница открывается по клику на иконку, настройки в отдельной вкладке, Server URL в настройках
+`1.1` — Search page opens on icon click, settings in a separate tab, Server URL in settings
 
-## 📝 Примечания
+## 📝 Notes
 
-- Для поиска нужен запущенный FastAPI-сервер с эндпоинтом `GET /api/search?q=`
+- Search requires a running FastAPI server with the `GET /api/search?q=` endpoint
