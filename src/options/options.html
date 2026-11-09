@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>ApexShot — настройки</title>
+  <style>
+    :root {
+      --border: #e1e4e8;
+      --text: #24292f;
+      --text-muted: #57606a;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --ok: #1a7f37;
+      --error: #a40e0e;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 32px;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      background: #f6f7f9;
+    }
+
+    .card {
+      max-width: 520px;
+      margin: 0 auto;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 20px;
+    }
+
+    .subtitle {
+      margin: 0 0 20px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .hint {
+      margin: 4px 0 16px;
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    input:focus { border-color: var(--accent); }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    button:hover { background: var(--accent-hover); }
+    button:disabled { opacity: 0.6; cursor: default; }
+
+    button.secondary {
+      background: #fff;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .status {
+      margin-top: 14px;
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 18px;
+      word-break: break-word;
+    }
+
+    .status.ok { color: var(--ok); }
+    .status.fail { color: var(--error); }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>ApexShot — настройки</h1>
+    <p class="subtitle">Расширение — тонкий клиент: поиск выполняет локальное FastAPI-приложение.</p>
+
+    <label for="baseUrl">BASE_URL</label>
+    <input id="baseUrl" type="text" placeholder="http://localhost:8000" autocomplete="off">
+    <p class="hint">Адрес локального FastAPI, например <code>http://localhost:8000</code>. Порт меняется здесь — расширение будет ходить на него автоматически.</p>
+
+    <label for="topK">TOP_K</label>
+    <input id="topK" type="number" min="1" max="50" value="10">
+    <p class="hint">Сколько результатов запрашивать у поиска (1–50, по умолчанию 10).</p>
+
+    <div class="row">
+      <button id="saveBtn">Сохранить</button>
+      <button id="testBtn" class="secondary">Проверить соединение</button>
+    </div>
+
+    <div id="saveStatus" class="status"></div>
+    <div id="testStatus" class="status"></div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

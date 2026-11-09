@@ -1,0 +1,225 @@
+/* popup.css - styles for the ApexShot search popup */
+
+:root {
+    --bg: #f6f7f9;
+    --card-bg: #ffffff;
+    --border: #e1e4e8;
+    --text: #24292f;
+    --text-muted: #57606a;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --ok: #1a7f37;
+    --warn-bg: #fff8e6;
+    --warn-border: #f0c95c;
+    --warn-text: #7a5b00;
+    --error-bg: #fdecec;
+    --error-border: #e5534b;
+    --error-text: #a40e0e;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    width: 400px;
+    max-height: 560px;
+    margin: 0;
+    padding: 12px;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--bg);
+}
+
+/* Header */
+
+.popup-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.brand {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.icon-btn {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--card-bg);
+    color: var(--text-muted);
+    padding: 4px 8px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.icon-btn:hover {
+    color: var(--text);
+    border-color: #c9d1d9;
+}
+
+/* Status banners */
+
+.banner {
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+.banner.error {
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
+    color: var(--error-text);
+}
+
+.banner.warning {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    color: var(--warn-text);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Search bar */
+
+.search-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+#queryInput {
+    flex: 1;
+    min-width: 0;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+}
+
+#queryInput:focus {
+    border-color: var(--accent);
+}
+
+#searchBtn {
+    padding: 7px 14px;
+    border: none;
+    border-radius: 6px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+#searchBtn:hover {
+    background: var(--accent-hover);
+}
+
+#searchBtn:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+/* Messages (empty result / connection error) */
+
+.message {
+    padding: 14px 10px;
+    text-align: center;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.message.error {
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
+    border-radius: 6px;
+    color: var(--error-text);
+}
+
+/* Results */
+
+.results {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+}
+
+.result-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.result-title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.result-title {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+    line-height: 1.35;
+    word-break: break-word;
+}
+
+.result-title:hover {
+    text-decoration: underline;
+}
+
+.open-source {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--card-bg);
+    color: var(--text-muted);
+    font-size: 11px;
+    padding: 3px 7px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.open-source:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.result-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.result-score {
+    font-family: Consolas, monospace;
+    color: var(--ok);
+    font-weight: 600;
+}
+
+.result-fields {
+    word-break: break-word;
+}
+
+.result-snippet {
+    margin-top: 6px;
+    color: var(--text-muted);
+    line-height: 1.45;
+    font-size: 12px;
+    word-break: break-word;
+}
