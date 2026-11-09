@@ -1,84 +1,112 @@
-# ApexScan - AI Search
+# ApexShot
 
-A browser extension (Edge/Chrome, Manifest V3) with its own search page. It searches JSON snapshots on your FastAPI server.
+Chrome-расширение (Manifest V3), тонкий клиент поиска по слепкам страниц.
+Весь поиск выполняет **локальное FastAPI-приложение** (гибридный поиск:
+ChromaDB + BM25 + RRF, эмбеддинги через Ollama bge-m3) — расширение только
+отправляет запрос и рисует результаты.
 
-## 📋 Description
+## Описание
 
-The «Search on ApexScan» page opens in a new tab only when the extension icon is clicked. The search is performed by a FastAPI server at the address specified in the settings (**Server URL**). The gear in the top-left corner opens the settings page, and the cross in the top-right closes the search tab.
+Клик по иконке открывает popup с полем поиска. Запрос уходит в локальный
+FastAPI как `POST {BASE_URL}/api/search` с телом `{"query": ..., "top_k": ...}`
+(таймаут 30 с), ответ рендерится построчно: заголовок, score, совпавшие поля,
+сниппет и ссылка на источник. Если Ollama недоступна, сервер отвечает с
+`degraded: true`, и над результатами появляется пометка о полнотекстовом
+режиме.
 
-## 🚀 Installation
+## Установка
 
-1. Open `edge://extensions` (or `chrome://extensions`)
-2. Enable «Developer mode»
-3. Click «Load unpacked extension» and select the project folder
-4. Click the extension icon — the ApexScan search page will open in a new tab
+1. Клонируйте репозиторий: `git clone <url>` (или распакуйте архив)
+2. Откройте `chrome://extensions`
+3. Включите «Режим разработчика»
+4. Нажмите «Load unpacked» и выберите папку проекта
+5. Кликните иконку ApexShot — откроется popup поиска
 
-## 📁 Project Structure
+## Структура проекта
 
-| File | Purpose |
-|------|---------|
-| `manifest.json` | Manifest V3 configuration, permissions, content script |
-| `index.html` / `index.js` | Search page (opens in a new tab when the icon is clicked) |
-| `viewer.html` / `viewer.js` | Viewing a single snapshot (`GET /api/snaps/{id}`): Summary, Facts, Highlights, Entities, Raw JSON |
-| `settings.html` / `settings.js` | Settings: **Server URL** |
-| `background.js` | Service worker: saves the default Server URL on install |
-| `ai-service.js`, `content.js` | Placeholder files (currently unused) |
-| `new_file.html`, `list_files.html` | Placeholder pages (currently unused) |
+| Файл | Назначение |
+|------|------------|
+| `manifest.json` | MV3: `action` с popup, service worker, `permissions: ["storage"]`, host_permissions для localhost |
+| `src/popup/popup.html` | UI поиска в popup |
+| `src/popup/popup.js` | Логика: health-check, `POST /api/search`, рендер результатов |
+| `src/popup/popup.css` | Стили popup |
+| `src/options/options.html` | Настройки: BASE_URL, TOP_K, проверка соединения |
+| `src/options/options.js` | Логика страницы настроек |
+| `src/background/service_worker.js` | Минимальный service worker: значения настроек по умолчанию при установке |
 
-## 🔧 How to Use
+Сборка не требуется: расширение — чистый JavaScript (ES2020+) без npm-
+зависимостей, загружается как unpacked-каталог.
 
-### Settings (gear in the top-left corner):
-1. **Server URL** — the address of the JSON server, e.g. `http://127.0.0.1:8000`
-2. Click **Save Settings**
+## Настройки
 
-### Search:
-1. Click the extension icon — the page will open in a new tab
-2. Enter a query and press Enter — the list of snapshots arrives from the server in JSON format (title, link, date, tags, confidence)
-3. Clicking a card opens the snapshot viewer page (the «← Back to search» button returns to the search)
-4. The cross in the top-right corner closes the search tab
+Открываются шестерёнкой в popup или через «Расширения → ApexShot → Параметры».
 
-## 🌐 Server
+| Параметр | Назначение | По умолчанию |
+|----------|------------|--------------|
+| **BASE_URL** | Адрес локального FastAPI, например `http://localhost:8000` | `http://localhost:8000` |
+| **TOP_K** | Сколько результатов запрашивать (1–50) | `10` |
 
-The extension talks to a FastAPI server (default `http://127.0.0.1:8000`, changeable in settings):
+Кнопка **«Проверить соединение»** вызывает `GET {BASE_URL}/api/health` и
+показывает «✓ Подключено (N слепков, Ollama: да/нет)» либо «✗ Не подключено».
 
-| Type | Endpoint |
-|------|----------|
-| Search | `GET /api/search?q=...` → `{ "total", "limit", "offset", "items": [{ "id", "type", "url", "created_at", "snippet" }] }` |
-| Snapshot by id | `GET /api/snaps/{snap_id}` → full snapshot JSON (`metadata.apex` for ApexShot snapshots) |
+## Поведение при отсутствии сервера
 
-### Running the server:
+При открытии popup выполняется тихий `GET /api/health` (таймаут 8 с — запас на
+холодный старт сети Chrome; закрытый порт отказывает мгновенно). Если
+приложение не запущено, показывается баннер «Запустите локальное приложение» —
+поле ввода остаётся активным, а «Искать» даёт понятное сообщение, не падая
+молча.
+
+## Сервер
+
+Расширение работает с локальным FastAPI:
+
+| Метод | Эндпоинт | Назначение |
+|-------|----------|------------|
+| `GET` | `/api/health` | Статус: число слепков, доступность Ollama |
+| `POST` | `/api/search` | Поиск: `{"query": "...", "top_k": 10}` → список результатов (`title`, `score`, `matched_fields`, `snippet`, `source_url`, флаг `degraded`) |
+
+Запуск локального приложения:
+
 ```bash
-cd ../Server_Apex
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+uvicorn main:app --reload --port 8000
 ```
 
-### Checking that it works:
-Open `http://127.0.0.1:8000/status` — the server status page.
+Порт настраивается флагом uvicorn; если он отличный от `8000` — просто
+поменяйте BASE_URL в настройках расширения. Удалённый сервер для поиска не
+используется.
 
-## 🔑 Permissions
+## Разрешения
 
-| Permission | Purpose |
-|------------|---------|
-| `activeTab` | Access to the active tab |
-| `scripting` | Injecting the content script if it is not already on the page |
-| `tabs` | Querying data of the active tab |
-| `storage` | Storing the Server URL |
-| `host_permissions` (`<all_urls>`) | Requests to the local localhost server |
+| Разрешение | Назначение |
+|------------|------------|
+| `storage` | Хранение BASE_URL и TOP_K в `chrome.storage.local` |
+| `host_permissions: http://localhost/*`, `http://127.0.0.1/*` | Запросы к локальному FastAPI без CORS-препятствий |
 
-## 🧩 Architecture
+Match-паттерны Chrome не включают номер порта, поэтому указаны оба локальных
+хоста целиком — расширение работает с любым портом BASE_URL.
+
+## Архитектура
 
 ```mermaid
-graph TD
-    A[Index page] -->|GET /api/search?q=| B[FastAPI Server]
-    B --> C[JSON results]
-    A -->|gear| D[Settings page]
-    D -->|Server URL| E[chrome.storage.sync]
+graph LR
+    A[Popup] -->|POST /api/search| B[Локальный FastAPI]
+    A -->|GET /api/health| B
+    B --> C[ChromaDB + BM25 + RRF + Ollama]
+    A --> D[chrome.storage.local: BASE_URL, TOP_K]
 ```
 
-## 📅 Version
+## Ручное тестирование (Chrome)
 
-`1.1` — Search page opens on icon click, settings in a separate tab, Server URL in settings
+| Тест | Сценарий | Ожидаемый результат |
+|------|----------|---------------------|
+| T1 | FastAPI запущен, индекс не пуст; ввести «настройка CORS в FastAPI» | Результаты со score и matched_fields |
+| T2 | FastAPI не запущен | Баннер «Запустите локальное приложение» |
+| T3 | Сменить BASE_URL в options на другой порт | Поиск ходит на новый порт |
+| T4 | Остановить Ollama | Результаты приходит с пометкой degraded |
+| T5 | «Открыть источник» | source_url открывается в новой вкладке |
 
-## 📝 Notes
+## Версия
 
-- Search requires a running FastAPI server with the `GET /api/search?q=` endpoint
+`2.0` — переименование в ApexShot, тонкий клиент локального FastAPI,
+поиск перенесён из вкладки в popup.
