@@ -135,9 +135,12 @@ function normalizeHit(item) {
     const matched = (item && (item.matched_fields || item.matchedFields)) || meta.matched_fields || [];
     const sourceUrl = (item && (item.source_url || item.url)) || meta.source_url || '';
 
+    const conf = (item && item.confidence);
+    const confidence = (typeof conf === 'number' && Number.isFinite(conf)) ? conf : null;
     return {
         title: String((item && (item.title || item.name)) || meta.title || 'Слепок'),
         score: Number(item && item.score) || 0,
+        confidence: confidence,
         matchedFields: (Array.isArray(matched) ? matched : [matched]).filter(v => v).join(', '),
         snippet: truncate((item && (item.snippet || item.text || item.summary)) || '', SNIPPET_LENGTH),
         sourceUrl: String(sourceUrl)
@@ -163,7 +166,17 @@ function renderResults(items, degraded) {
         card.dataset.id = raw.id || '';
 
         card.querySelector('.result-title').textContent = hit.title;
-        card.querySelector('.result-score').textContent = hit.score.toFixed(2);
+        const scoreEl = card.querySelector('.result-score');
+        if (hit.confidence !== null) {
+            scoreEl.textContent = hit.confidence.toFixed(2);
+            scoreEl.style.display = '';
+        } else if (Number.isFinite(hit.score) && hit.score !== 0) {
+            scoreEl.textContent = hit.score.toFixed(2);
+            scoreEl.style.display = '';
+        } else {
+            scoreEl.textContent = '';
+            scoreEl.style.display = 'none';
+        }
         card.querySelector('.result-fields').textContent = hit.matchedFields;
         card.querySelector('.result-snippet').textContent = hit.snippet;
 
