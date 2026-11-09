@@ -2,11 +2,15 @@
 // All search math (embeddings, ChromaDB, BM25, RRF) lives in the local FastAPI
 // app; the extension only sends POST /api/search and renders the response.
 
-const DEFAULT_BASE_URL = 'http://localhost:8000';
+const DEFAULT_BASE_URL = 'http://localhost:8080';
 const DEFAULT_TOP_K = 10;
 const HEALTH_TIMEOUT_MS = 8000; // запас на холодный старт сети Chrome (~2-4 с на первый fetch)
 const SEARCH_TIMEOUT_MS = 30000;
 const SNIPPET_LENGTH = 200;
+
+let currentQuery = '';
+let currentOffset = 0;
+let currentTotal = 0;
 
 const queryInput = document.getElementById('queryInput');
 const searchBtn = document.getElementById('searchBtn');
@@ -15,6 +19,10 @@ const messageDiv = document.getElementById('message');
 const statusBanner = document.getElementById('statusBanner');
 const degradedBanner = document.getElementById('degradedBanner');
 const optionsBtn = document.getElementById('optionsBtn');
+const paginationDiv = document.getElementById('pagination');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const pageInfo = document.getElementById('pageInfo');
 
 // ---- Settings -------------------------------------------------------------
 
@@ -73,12 +81,12 @@ async function checkHealth(baseUrl) {
     }
 }
 
-// POST {BASE_URL}/api/search {"query", "top_k"}
-async function runSearchRequest(baseUrl, topK, query) {
+// POST {BASE_URL}/api/search {"query", "top_k", "offset"}
+async function runSearchRequest(baseUrl, topK, query, offset) {
     const response = await fetchWithTimeout(`${baseUrl}/api/search`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, top_k: topK })
+        body: JSON.stringify({ query, top_k: topK, offset: offset || 0 })
     }, SEARCH_TIMEOUT_MS);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await response.json();
@@ -86,7 +94,7 @@ async function runSearchRequest(baseUrl, topK, query) {
 
 // ---- Rendering ------------------------------------------------------------
 
-const OFFLINE_MESSAGE = 'Локальное приложение не запущено. Откройте его (uvicorn main:app --port 8000) и повторите.';
+const OFFLINE_MESSAGE = 'Локальное приложение не запущено. Откройте его (uvicorn main:app --port 8080) и повторите.';
 
 function showMessage(text, isError) {
     messageDiv.textContent = text;
@@ -152,6 +160,7 @@ function renderResults(items, degraded) {
     for (const raw of items) {
         const hit = normalizeHit(raw);
         const card = template.content.firstElementChild.cloneNode(true);
+        card.dataset.id = raw.id || '';
 
         card.querySelector('.result-title').textContent = hit.title;
         card.querySelector('.result-score').textContent = hit.score.toFixed(2);
@@ -166,7 +175,8 @@ function renderResults(items, degraded) {
             titleLink.target = '_blank';
             titleLink.rel = 'noopener';
             // "Открыть источник" -> chrome.tabs.create({url: source_url})
-            sourceBtn.addEventListener('click', () => {
+            sourceBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 chrome.tabs.create({ url: hit.sourceUrl });
             });
         } else {
@@ -175,42 +185,85 @@ function renderResults(items, degraded) {
             sourceBtn.title = 'Источник недоступен';
         }
 
+        // Открыть viewer в новой вкладке по клику на карточку
+        card.addEventListener('click', (e) => {
+            if (e.target.closest('a, button')) return;
+            const id = raw.id;
+            if (!id) return;
+            const url = chrome.runtime.getURL('src/viewer/viewer.html')
+                + '?id=' + encodeURIComponent(id)
+                + (currentQuery ? '&q=' + encodeURIComponent(currentQuery) : '');
+            chrome.tabs.create({ url });
+        });
+
         resultsDiv.appendChild(card);
     }
 }
 
 // ---- Search flow ----------------------------------------------------------
 
-async function search() {
-    const query = String(queryInput.value || '').trim();
-    if (!query) return;
+async function runSearch(query, offset = 0) {
+    query = String(query || '').trim();
+    if (!query) {
+        currentQuery = '';
+        currentOffset = 0;
+        currentTotal = 0;
+        hideMessage();
+        resultsDiv.innerHTML = '';
+        if (paginationDiv) paginationDiv.classList.add('hidden');
+        return;
+    }
 
     const { baseUrl, topK } = await getSettings();
+    const pageOffset = Math.max(0, Number(offset) || 0);
 
+    currentQuery = query;
     hideMessage();
     resultsDiv.innerHTML = '';
     showBanner(degradedBanner, false);
     showBanner(statusBanner, false);
+    if (paginationDiv) paginationDiv.classList.add('hidden');
     searchBtn.disabled = true;
     searchBtn.textContent = 'Искать…';
 
     try {
-        const data = await runSearchRequest(baseUrl, topK, query);
+        const data = await runSearchRequest(baseUrl, topK, query, pageOffset);
         const items = Array.isArray(data.items) ? data.items
             : (Array.isArray(data.results) ? data.results : []);
+        currentOffset = pageOffset;
+        currentTotal = Number(data.total) || items.length;
+
         // degraded приходит на каждом элементе; учтём и top-level вариант
         const degraded = !!(data && data.degraded)
             || items.some(item => item && (item.degraded || item.degraded_reason));
         renderResults(items, degraded);
+
+        // Пагинация
+        if (paginationDiv && pageInfo && prevBtn && nextBtn) {
+            const page = Math.floor(currentOffset / Math.max(1, topK)) + 1;
+            const pages = Math.max(1, Math.ceil(currentTotal / Math.max(1, topK)));
+            pageInfo.textContent = `Стр. ${page} из ${pages} · ${currentTotal} найдено`;
+            prevBtn.disabled = currentOffset <= 0;
+            nextBtn.disabled = currentOffset + topK >= currentTotal;
+            paginationDiv.classList.remove('hidden');
+            if (!items.length) paginationDiv.classList.add('hidden');
+        }
     } catch (e) {
         console.error('ApexShot: search failed', e);
         resultsDiv.innerHTML = '';
         showBanner(degradedBanner, false);
         showMessage(OFFLINE_MESSAGE, true);
+        if (paginationDiv) paginationDiv.classList.add('hidden');
     } finally {
         searchBtn.disabled = false;
         searchBtn.textContent = 'Искать';
     }
+}
+
+async function search() {
+    const query = String(queryInput.value || '').trim();
+    if (!query) return;
+    await runSearch(query, 0);
 }
 
 // ---- Events / init --------------------------------------------------------
@@ -222,6 +275,25 @@ queryInput.addEventListener('keydown', (e) => {
         search();
     }
 });
+
+if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+        if (currentOffset > 0) {
+            const topK = DEFAULT_TOP_K;
+            getSettings().then(s => runSearch(currentQuery, Math.max(0, currentOffset - (s.topK || topK))));
+        }
+    });
+}
+if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+        getSettings().then(s => {
+            const topK = s.topK || DEFAULT_TOP_K;
+            if (currentOffset + topK < currentTotal) {
+                runSearch(currentQuery, currentOffset + topK);
+            }
+        });
+    });
+}
 
 optionsBtn.addEventListener('click', () => chrome.runtime.openOptionsPage());
 

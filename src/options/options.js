@@ -1,6 +1,6 @@
 // options.js - ApexShot settings page: BASE_URL, TOP_K, connection test.
 
-const DEFAULT_BASE_URL = 'http://localhost:8000';
+const DEFAULT_BASE_URL = 'http://localhost:8080';
 const DEFAULT_TOP_K = 10;
 
 const baseUrlInput = document.getElementById('baseUrl');
