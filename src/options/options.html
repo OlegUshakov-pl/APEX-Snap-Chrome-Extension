@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>ApexShot — настройки</title>
+  <title>ApexShot — Settings</title>
   <style>
     :root {
       --border: #e1e4e8;
@@ -108,20 +108,20 @@
 </head>
 <body>
   <div class="card">
-    <h1>ApexShot — настройки</h1>
-    <p class="subtitle">Расширение — тонкий клиент: поиск выполняет локальное FastAPI-приложение.</p>
+    <h1>ApexShot — Settings</h1>
+    <p class="subtitle">The extension is a thin client: search is performed by the local FastAPI app.</p>
 
     <label for="baseUrl">BASE_URL</label>
     <input id="baseUrl" type="text" placeholder="http://localhost:8080" autocomplete="off">
-    <p class="hint">Адрес локального FastAPI, например <code>http://localhost:8080</code>. Порт меняется здесь — расширение будет ходить на него автоматически.</p>
+    <p class="hint">Address of the local FastAPI, e.g. <code>http://localhost:8080</code>. Change the port here — the extension will use it automatically.</p>
 
     <label for="topK">TOP_K</label>
     <input id="topK" type="number" min="1" max="50" value="10">
-    <p class="hint">Сколько результатов запрашивать у поиска (1–50, по умолчанию 10).</p>
+    <p class="hint">How many results to request from the search (1–50, default 10).</p>
 
     <div class="row">
-      <button id="saveBtn">Сохранить</button>
-      <button id="testBtn" class="secondary">Проверить соединение</button>
+      <button id="saveBtn">Save</button>
+      <button id="testBtn" class="secondary">Test connection</button>
     </div>
 
     <div id="saveStatus" class="status"></div>

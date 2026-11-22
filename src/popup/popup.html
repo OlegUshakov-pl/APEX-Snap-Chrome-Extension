@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>ApexShot</title>
@@ -8,32 +8,32 @@
 <body>
   <header class="popup-header">
     <h1 class="brand">ApexShot</h1>
-    <button id="optionsBtn" class="icon-btn" title="Настройки" aria-label="Настройки">&#9881;</button>
+    <button id="optionsBtn" class="icon-btn" title="Settings" aria-label="Settings">&#9881;</button>
   </header>
 
   <div id="statusBanner" class="banner hidden" role="status"></div>
   <div id="degradedBanner" class="banner warning hidden" role="status">
-    Ollama недоступен — результаты только полнотекстовые
+    Ollama unavailable — full-text results only
   </div>
 
   <div class="search-bar">
-    <input id="queryInput" type="text" placeholder="Поиск по слепкам..." autocomplete="off" autofocus>
-    <button id="searchBtn">Искать</button>
+    <input id="queryInput" type="text" placeholder="Search snapshots..." autocomplete="off" autofocus>
+    <button id="searchBtn">Search</button>
   </div>
 
   <div id="message" class="message hidden"></div>
   <div id="results" class="results"></div>
   <div id="pagination" class="pagination hidden">
-    <button id="prevBtn" class="page-btn">&larr; Назад</button>
+    <button id="prevBtn" class="page-btn">&larr; Previous</button>
     <span id="pageInfo"></span>
-    <button id="nextBtn" class="page-btn">Вперёд &rarr;</button>
+    <button id="nextBtn" class="page-btn">Next &rarr;</button>
   </div>
 
   <template id="resultTemplate">
     <div class="result-card">
       <div class="result-title-row">
         <a class="result-title"></a>
-        <button class="open-source" title="Открыть источник в новой вкладке">Открыть источник</button>
+        <button class="open-source" title="Open source in a new tab">Open source</button>
       </div>
       <div class="result-meta">
         <span class="result-score"></span>

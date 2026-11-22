@@ -4,7 +4,7 @@
 
 const DEFAULT_BASE_URL = 'http://localhost:8080';
 const DEFAULT_TOP_K = 10;
-const HEALTH_TIMEOUT_MS = 8000; // запас на холодный старт сети Chrome (~2-4 с на первый fetch)
+const HEALTH_TIMEOUT_MS = 8000; // allowance for Chrome's cold network start (~2-4 s on the first fetch)
 const SEARCH_TIMEOUT_MS = 30000;
 const SNIPPET_LENGTH = 200;
 
@@ -94,7 +94,7 @@ async function runSearchRequest(baseUrl, topK, query, offset) {
 
 // ---- Rendering ------------------------------------------------------------
 
-const OFFLINE_MESSAGE = 'Локальное приложение не запущено. Откройте его (uvicorn main:app --port 8080) и повторите.';
+const OFFLINE_MESSAGE = 'The local app is not running. Start it (uvicorn main:app --port 8080) and try again.';
 
 function showMessage(text, isError) {
     messageDiv.textContent = text;
@@ -138,7 +138,7 @@ function normalizeHit(item) {
     const conf = (item && item.confidence);
     const confidence = (typeof conf === 'number' && Number.isFinite(conf)) ? conf : null;
     return {
-        title: String((item && (item.title || item.name)) || meta.title || 'Слепок'),
+        title: String((item && (item.title || item.name)) || meta.title || 'Snapshot'),
         score: Number(item && item.score) || 0,
         confidence: confidence,
         matchedFields: (Array.isArray(matched) ? matched : [matched]).filter(v => v).join(', '),
@@ -152,7 +152,7 @@ function renderResults(items, degraded) {
 
     if (!items.length) {
         resultsDiv.innerHTML = '';
-        showMessage('Ничего не найдено', false);
+        showMessage('Nothing found', false);
         return;
     }
 
@@ -187,7 +187,7 @@ function renderResults(items, degraded) {
             titleLink.href = hit.sourceUrl;
             titleLink.target = '_blank';
             titleLink.rel = 'noopener';
-            // "Открыть источник" -> chrome.tabs.create({url: source_url})
+            // "Open source" -> chrome.tabs.create({url: source_url})
             sourceBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 chrome.tabs.create({ url: hit.sourceUrl });
@@ -195,10 +195,10 @@ function renderResults(items, degraded) {
         } else {
             titleLink.removeAttribute('href');
             sourceBtn.disabled = true;
-            sourceBtn.title = 'Источник недоступен';
+            sourceBtn.title = 'Source unavailable';
         }
 
-        // Открыть viewer в новой вкладке по клику на карточку
+        // Open the viewer in a new tab when the card is clicked
         card.addEventListener('click', (e) => {
             if (e.target.closest('a, button')) return;
             const id = raw.id;
@@ -237,7 +237,7 @@ async function runSearch(query, offset = 0) {
     showBanner(statusBanner, false);
     if (paginationDiv) paginationDiv.classList.add('hidden');
     searchBtn.disabled = true;
-    searchBtn.textContent = 'Искать…';
+    searchBtn.textContent = 'Searching…';
 
     try {
         const data = await runSearchRequest(baseUrl, topK, query, pageOffset);
@@ -246,16 +246,16 @@ async function runSearch(query, offset = 0) {
         currentOffset = pageOffset;
         currentTotal = Number(data.total) || items.length;
 
-        // degraded приходит на каждом элементе; учтём и top-level вариант
+        // degraded may arrive on each item; handle the top-level variant too
         const degraded = !!(data && data.degraded)
             || items.some(item => item && (item.degraded || item.degraded_reason));
         renderResults(items, degraded);
 
-        // Пагинация
+        // Pagination
         if (paginationDiv && pageInfo && prevBtn && nextBtn) {
             const page = Math.floor(currentOffset / Math.max(1, topK)) + 1;
             const pages = Math.max(1, Math.ceil(currentTotal / Math.max(1, topK)));
-            pageInfo.textContent = `Стр. ${page} из ${pages} · ${currentTotal} найдено`;
+            pageInfo.textContent = `Page ${page} of ${pages} · ${currentTotal} found`;
             prevBtn.disabled = currentOffset <= 0;
             nextBtn.disabled = currentOffset + topK >= currentTotal;
             paginationDiv.classList.remove('hidden');
@@ -269,7 +269,7 @@ async function runSearch(query, offset = 0) {
         if (paginationDiv) paginationDiv.classList.add('hidden');
     } finally {
         searchBtn.disabled = false;
-        searchBtn.textContent = 'Искать';
+        searchBtn.textContent = 'Search';
     }
 }
 
@@ -318,7 +318,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (!health) {
         showBanner(statusBanner, true);
         statusBanner.className = 'banner error';
-        statusBanner.textContent = 'Запустите локальное приложение, затем повторите поиск.';
+        statusBanner.textContent = 'Start the local app, then retry the search.';
     }
     queryInput.focus();
 });

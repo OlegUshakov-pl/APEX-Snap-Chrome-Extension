@@ -54,7 +54,7 @@ function describeHealth(health) {
         health.snapshot_count ?? health.snap_count ?? health.snapshots ??
         health.count ?? health.total ?? health.docs ?? health.documents ?? 0
     );
-    // ollama может быть объектом {available, model} или булевой
+    // ollama may be an object {available, model} or a boolean
     const rawOllama = health.ollama;
     const ollama = Boolean(
         (rawOllama && typeof rawOllama === 'object')
@@ -74,11 +74,11 @@ saveBtn.addEventListener('click', async () => {
         baseUrlInput.value = baseUrl;
         topKInput.value = topK;
         saveStatus.className = 'status';
-        saveStatus.textContent = 'Настройки сохранены.';
+        saveStatus.textContent = 'Settings saved.';
     } catch (e) {
         console.error('ApexShot: failed to save settings', e);
         saveStatus.className = 'status fail';
-        saveStatus.textContent = 'Ошибка при сохранении настроек.';
+        saveStatus.textContent = 'Failed to save settings.';
     }
 });
 
@@ -88,7 +88,7 @@ testBtn.addEventListener('click', async () => {
     const baseUrl = normalizeBaseUrl(baseUrlInput.value);
     testBtn.disabled = true;
     testStatus.className = 'status';
-    testStatus.textContent = 'Проверка соединения…';
+    testStatus.textContent = 'Testing connection…';
 
     const health = await checkHealth(baseUrl);
     const info = describeHealth(health);
@@ -96,10 +96,10 @@ testBtn.addEventListener('click', async () => {
     if (info) {
         testStatus.className = 'status ok';
         testStatus.textContent =
-            `✓ Подключено (${info.count} слепков, Ollama: ${info.ollama ? 'да' : 'нет'})`;
+            `✓ Connected (${info.count} snapshots, Ollama: ${info.ollama ? 'yes' : 'no'})`;
     } else {
         testStatus.className = 'status fail';
-        testStatus.textContent = `✗ Не подключено (${baseUrl} недоступен).`;
+        testStatus.textContent = `✗ Not connected (${baseUrl} is unavailable).`;
     }
 
     testBtn.disabled = false;

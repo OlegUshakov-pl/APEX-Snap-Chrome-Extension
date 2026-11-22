@@ -1,112 +1,110 @@
 # ApexShot
 
-Chrome-расширение (Manifest V3), тонкий клиент поиска по слепкам страниц.
-Весь поиск выполняет **локальное FastAPI-приложение** (гибридный поиск:
-ChromaDB + BM25 + RRF, эмбеддинги через Ollama bge-m3) — расширение только
-отправляет запрос и рисует результаты.
+A Chrome extension (Manifest V3) that acts as a thin client for searching page snapshots.
+All search work is done by a **local FastAPI application** (hybrid search:
+ChromaDB + BM25 + RRF, embeddings via Ollama bge-m3) — the extension only
+sends the query and renders the results.
 
-## Описание
+## Description
 
-Клик по иконке открывает popup с полем поиска. Запрос уходит в локальный
-FastAPI как `POST {BASE_URL}/api/search` с телом `{"query": ..., "top_k": ...}`
-(таймаут 30 с), ответ рендерится построчно: заголовок, score, совпавшие поля,
-сниппет и ссылка на источник. Если Ollama недоступна, сервер отвечает с
-`degraded: true`, и над результатами появляется пометка о полнотекстовом
-режиме.
+Clicking the icon opens a popup with a search field. The query is sent to the
+local FastAPI as `POST {BASE_URL}/api/search` with the body `{"query": ..., "top_k": ...}`
+(30 s timeout), and the response is rendered as a list of rows: title, score,
+matched fields, snippet and a link to the source. If Ollama is unavailable,
+the server responds with `degraded: true`, and a notice about full-text mode
+appears above the results.
 
-## Установка
+## Installation
 
-1. Клонируйте репозиторий: `git clone <url>` (или распакуйте архив)
-2. Откройте `chrome://extensions`
-3. Включите «Режим разработчика»
-4. Нажмите «Load unpacked» и выберите папку проекта
-5. Кликните иконку ApexShot — откроется popup поиска
+1. Clone the repository: `git clone <url>` (or extract the archive)
+2. Open `chrome://extensions`
+3. Enable "Developer mode"
+4. Click "Load unpacked" and select the project folder
+5. Click the ApexShot icon — the search popup will open
 
-## Структура проекта
+## Project structure
 
-| Файл | Назначение |
-|------|------------|
-| `manifest.json` | MV3: `action` с popup, service worker, `permissions: ["storage"]`, host_permissions для localhost |
-| `src/popup/popup.html` | UI поиска в popup |
-| `src/popup/popup.js` | Логика: health-check, `POST /api/search`, рендер результатов |
-| `src/popup/popup.css` | Стили popup |
-| `src/options/options.html` | Настройки: BASE_URL, TOP_K, проверка соединения |
-| `src/options/options.js` | Логика страницы настроек |
-| `src/background/service_worker.js` | Минимальный service worker: значения настроек по умолчанию при установке |
+| File | Purpose |
+|------|---------|
+| `manifest.json` | MV3: `action` with popup, service worker, `permissions: ["storage"]`, host permissions for localhost |
+| `src/popup/popup.html` | Search UI in the popup |
+| `src/popup/popup.js` | Logic: health check, `POST /api/search`, result rendering |
+| `src/popup/popup.css` | Popup styles |
+| `src/options/options.html` | Settings: BASE_URL, TOP_K, connection check |
+| `src/options/options.js` | Settings page logic |
+| `src/background/service_worker.js` | Minimal service worker: default settings on install |
 
-Сборка не требуется: расширение — чистый JavaScript (ES2020+) без npm-
-зависимостей, загружается как unpacked-каталог.
+No build step is required: the extension is plain JavaScript (ES2020+) with no npm
+dependencies and is loaded as an unpacked directory.
 
-## Настройки
+## Settings
 
-Открываются шестерёнкой в popup или через «Расширения → ApexShot → Параметры».
+Open them with the gear icon in the popup or via "Extensions → ApexShot → Options".
 
-| Параметр | Назначение | По умолчанию |
-|----------|------------|--------------|
-| **BASE_URL** | Адрес локального FastAPI, например `http://localhost:8080` | `http://localhost:8080` |
-| **TOP_K** | Сколько результатов запрашивать (1–50) | `10` |
+| Setting | Purpose | Default |
+|---------|---------|---------|
+| **BASE_URL** | Address of the local FastAPI, e.g. `http://localhost:8080` | `http://localhost:8080` |
+| **TOP_K** | How many results to request (1–50) | `10` |
 
-Кнопка **«Проверить соединение»** вызывает `GET {BASE_URL}/api/health` и
-показывает «✓ Подключено (N слепков, Ollama: да/нет)» либо «✗ Не подключено».
+The **"Test connection"** button calls `GET {BASE_URL}/api/health` and shows
+"✓ Connected (N snapshots, Ollama: yes/no)" or "✗ Not connected".
 
-## Поведение при отсутствии сервера
+## Behavior when the server is unavailable
 
-При открытии popup выполняется тихий `GET /api/health` (таймаут 8 с — запас на
-холодный старт сети Chrome; закрытый порт отказывает мгновенно). Если
-приложение не запущено, показывается баннер «Запустите локальное приложение» —
-поле ввода остаётся активным, а «Искать» даёт понятное сообщение, не падая
-молча.
+When the popup opens, it performs a silent `GET /api/health` (8 s timeout —
+allowance for Chrome's cold network start; a closed port fails immediately). If
+the app is not running, a "Start the local app" banner is shown — the input
+stays active, and "Search" gives a clear message instead of failing silently.
 
-## Сервер
+## Server
 
-Расширение работает с локальным FastAPI:
+The extension works with a local FastAPI app:
 
-| Метод | Эндпоинт | Назначение |
-|-------|----------|------------|
-| `GET` | `/api/health` | Статус: число слепков, доступность Ollama |
-| `POST` | `/api/search` | Поиск: `{"query": "...", "top_k": 10}` → список результатов (`title`, `score`, `matched_fields`, `snippet`, `source_url`, флаг `degraded`) |
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| `GET` | `/api/health` | Status: number of snapshots, Ollama availability |
+| `POST` | `/api/search` | Search: `{"query": "...", "top_k": 10}` → list of results (`title`, `score`, `matched_fields`, `snippet`, `source_url`, `degraded` flag) |
 
-Запуск локального приложения:
+Start the local app with:
 
 ```bash
 uvicorn main:app --reload --port 8080
 ```
 
-Порт настраивается флагом uvicorn; если он отличный от `8080` — просто
-поменяйте BASE_URL в настройках расширения. Удалённый сервер для поиска не
-используется.
+The port is configured with the uvicorn flag; if it differs from `8080`, just
+change BASE_URL in the extension settings. No remote search server is used.
 
-## Разрешения
+## Permissions
 
-| Разрешение | Назначение |
-|------------|------------|
-| `storage` | Хранение BASE_URL и TOP_K в `chrome.storage.local` |
-| `host_permissions: http://localhost/*`, `http://127.0.0.1/*` | Запросы к локальному FastAPI без CORS-препятствий |
+| Permission | Purpose |
+|------------|---------|
+| `storage` | Store BASE_URL and TOP_K in `chrome.storage.local` |
+| `host_permissions: http://localhost/*`, `http://127.0.0.1/*` | Requests to the local FastAPI without CORS issues |
 
-Match-паттерны Chrome не включают номер порта, поэтому указаны оба локальных
-хоста целиком — расширение работает с любым портом BASE_URL.
+Chrome match patterns do not include the port number, so both local hosts are
+listed in full — the extension works with any BASE_URL port.
 
-## Архитектура
+## Architecture
 
 ```mermaid
 graph LR
-    A[Popup] -->|POST /api/search| B[Локальный FastAPI]
+    A[Popup] -->|POST /api/search| B[Local FastAPI]
     A -->|GET /api/health| B
     B --> C[ChromaDB + BM25 + RRF + Ollama]
     A --> D[chrome.storage.local: BASE_URL, TOP_K]
 ```
 
-## Ручное тестирование (Chrome)
+## Manual testing (Chrome)
 
-| Тест | Сценарий | Ожидаемый результат |
-|------|----------|---------------------|
-| T1 | FastAPI запущен, индекс не пуст; ввести «настройка CORS в FastAPI» | Результаты со score и matched_fields |
-| T2 | FastAPI не запущен | Баннер «Запустите локальное приложение» |
-| T3 | Сменить BASE_URL в options на другой порт | Поиск ходит на новый порт |
-| T4 | Остановить Ollama | Результаты приходит с пометкой degraded |
-| T5 | «Открыть источник» | source_url открывается в новой вкладке |
+| Test | Scenario | Expected result |
+|------|----------|-----------------|
+| T1 | FastAPI is running, index is not empty; enter "CORS configuration in FastAPI" | Results with score and matched_fields |
+| T2 | FastAPI is not running | "Start the local app" banner |
+| T3 | Change BASE_URL in options to a different port | Search goes to the new port |
+| T4 | Stop Ollama | Results arrive with the degraded flag |
+| T5 | "Open source" | source_url opens in a new tab |
 
-## Версия
+## Version
 
-`2.0` — переименование в ApexShot, тонкий клиент локального FastAPI,
-поиск перенесён из вкладки в popup.
+`2.0` — renamed to ApexShot, thin client of the local FastAPI,
+search moved from a tab into the popup.

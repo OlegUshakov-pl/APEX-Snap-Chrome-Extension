@@ -1,4 +1,4 @@
-// viewer.js - просмотр одного слепка (GET {BASE_URL}/api/snaps/{id})
+// viewer.js - view a single snapshot (GET {BASE_URL}/api/snaps/{id})
 
 const DEFAULT_BASE_URL = 'http://localhost:8080';
 
@@ -102,7 +102,7 @@ function badge(text, cls) {
 
 async function load() {
     if (!snapId) {
-        statusEl.textContent = 'Не указан id слепка';
+        statusEl.textContent = 'No snapshot id specified';
         statusEl.classList.add('error');
         return;
     }
@@ -116,7 +116,7 @@ async function load() {
         render(row);
     } catch (e) {
         console.error('ApexShot: snapshot load error', e);
-        statusEl.textContent = `Не удалось загрузить слепок: сервер ${baseUrl} недоступен`;
+        statusEl.textContent = `Failed to load snapshot: server ${baseUrl} is unavailable`;
         statusEl.classList.add('error');
     }
 }
@@ -222,7 +222,7 @@ function overviewHtml(summary, sections, questions, tags, row) {
     parts.push('<div class="section-title">Summary</div>');
     parts.push(summary
         ? `<p class="summary-text">${escapeHtml(summary)}</p>`
-        : `<p class="summary-text">Нет описания. <span style="color:#999;">${escapeHtml(String(row.url || row.id || ''))}</span></p>`);
+        : `<p class="summary-text">No description. <span style="color:#999;">${escapeHtml(String(row.url || row.id || ''))}</span></p>`);
 
     if (sections.length) {
         parts.push('<div class="section-title">Sections</div>');
