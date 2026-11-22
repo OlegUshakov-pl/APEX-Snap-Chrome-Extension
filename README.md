@@ -1,3 +1,7 @@
+![search](./images/search.png)
+![settings](./images/settings.png)
+![result](./images/result.png)
+![result2](./images/result2.png)
 # ApexShot
 
 A Chrome extension (Manifest V3) that acts as a thin client for searching page snapshots.
